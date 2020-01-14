@@ -13,7 +13,4 @@ D:\CashTerminal\CashTerminal\obj\Debug\CashTerminal.exe
 D:\CashTerminal\CashTerminal\obj\Debug\CashTerminal.pdb
 D:\CashTerminal\CashTerminal\bin\Debug\PropertyChanged.dll
 D:\CashTerminal\CashTerminal\bin\Debug\PropertyChanged.xml
-D:\CashTerminal\CashTerminal\bin\Debug\Microsoft.Expression.Interactions.dll
-D:\CashTerminal\CashTerminal\bin\Debug\System.Windows.Interactivity.dll
-D:\CashTerminal\CashTerminal\bin\Debug\Microsoft.Expression.Interactions.xml
-D:\CashTerminal\CashTerminal\bin\Debug\System.Windows.Interactivity.xml
+D:\CashTerminal\CashTerminal\obj\Debug\CashTerminal.csprojResolveAssemblyReference.cache

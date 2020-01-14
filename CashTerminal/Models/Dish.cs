@@ -7,12 +7,13 @@ namespace CashTerminal.Models
     public class Dish : Iitem, INotifyPropertyChanged
     {
         private double number;
+
         private static Random rnd = new Random();
 
-        public event PropertyChangedEventHandler PropertyChanged;
-
         public int Id { get; set; }
+
         public string Name { get; set; }
+
         public int Index { get; set; }
 
         public double Number
@@ -33,8 +34,8 @@ namespace CashTerminal.Models
         public double Price { get; set; }
 
         public double TotalPrice { get; set; }
-     
 
+        public event PropertyChangedEventHandler PropertyChanged;
 
         public Dish(string name)
         {
