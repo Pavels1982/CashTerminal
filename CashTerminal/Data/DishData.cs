@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CashTerminal.Services
+namespace CashTerminal.Data
 {
     public class DishData
     {

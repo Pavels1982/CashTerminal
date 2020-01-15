@@ -1,4 +1,5 @@
-﻿using CashTerminal.Models;
+﻿using CashTerminal.Data;
+using CashTerminal.Models;
 using CashTerminal.Services;
 using System;
 using System.Collections.Generic;

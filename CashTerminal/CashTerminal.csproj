@@ -69,9 +69,8 @@
     </Compile>
     <Compile Include="Models\Dish.cs" />
     <Compile Include="Models\DishGroup.cs" />
-    <Compile Include="Services\DishData.cs" />
-    <Compile Include="Services\Enums.cs" />
-    <Compile Include="Services\Iitem.cs" />
+    <Compile Include="Data\DishData.cs" />
+    <Compile Include="Models\Iitem.cs" />
     <Compile Include="Services\RelayCommand.cs" />
     <Compile Include="ViewModels\MainWindowViewModel.cs" />
     <Compile Include="Views\MainWindow.xaml.cs">
