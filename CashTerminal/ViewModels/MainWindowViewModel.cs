@@ -1,6 +1,7 @@
 ﻿using CashTerminal.Data;
 using CashTerminal.Models;
 using CashTerminal.Services;
+using CashTerminal.Views;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -187,6 +188,8 @@ namespace CashTerminal.ViewModels
             DishData = new DishData();
             ItemList = GetDishGroupList();
 
+            WebCamWindow win = new WebCamWindow();
+            win.Show();
         }
 
   

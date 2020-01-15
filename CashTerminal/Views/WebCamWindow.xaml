@@ -1,0 +1,36 @@
+﻿<Window x:Class="CashTerminal.Views.WebCamWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:CashTerminal.Views"
+        mc:Ignorable="d"
+        Title="WebCamWindow" Height="800" Width="542.136">
+    <Grid>
+        <StackPanel Orientation="Vertical">
+            <StackPanel Orientation="Horizontal" Height="Auto">
+                <ComboBox 
+                    Width="150"
+                    ItemsSource="{Binding ListOfWebCamDevice}" 
+                    SelectedItem="{Binding SelectedWebCamDevice}" >
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding Path=Name}"/>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+
+                <Button Width="60" Content="Старт" Command="{Binding StartStreamCommand}"/>
+                <Button Width="60" Content="Стоп" Command="{Binding StopStreamCommand}"/>
+            </StackPanel>
+
+            <Image  Source="{Binding Image}" />
+            <UniformGrid Columns="2">
+                <TextBlock Grid.Column="0" Text="{Binding WeightLeft}"/>
+                <TextBlock Grid.Column="1" Text="{Binding WeightRight}"/>
+            </UniformGrid>
+
+        </StackPanel>
+
+    </Grid>
+</Window>
