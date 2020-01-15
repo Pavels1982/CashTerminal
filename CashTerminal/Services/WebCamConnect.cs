@@ -2,6 +2,7 @@
 using CashTerminal.Models;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -13,6 +14,19 @@ using System.Windows.Media.Imaging;
 
 namespace WebCam
 {
+    public class AreaRect
+    {
+        public byte[,] ByteArray { get; set; }
+        public int Weight { get; set; }
+
+        public AreaRect(byte[,] byteArray, int weight)
+        {
+            this.ByteArray = byteArray;
+            this.Weight = weight;
+        }
+
+    }
+
 
     public static class WebCamConnect
     {
@@ -23,10 +37,12 @@ namespace WebCam
         private static List<WebCamDevice> deviceList = new List<WebCamDevice>();
 
         public static bool IsStarted { get; set; }
+        private static Bitmap StoreImage { get; set; }
 
         private static event NewFrame_Event newFrame;
 
-        public delegate void NewFrame_Event(BitmapImage image, int weightLeft, int weightRight);
+      //  public delegate void NewFrame_Event(BitmapImage image, int weightLeft, int weightRight);
+        public delegate void NewFrame_Event(BitmapImage image);
 
         public static event NewFrame_Event NewFrame
         {
@@ -72,6 +88,17 @@ namespace WebCam
             }
         
         }
+
+        enum type { leftUp, rightUp };
+        private static int framerate = 2;
+        private static int countframe = 0;
+        private static int weightLeft = 0;
+        private static int weightRight = 0;
+
+        private static int AreaSize = 100;
+        public static int threshold = 20;
+        static bool isBinary = true;
+
 
         public static List<WebCamDevice> GetDevices()
         {
@@ -127,10 +154,6 @@ namespace WebCam
         }
 
 
-        private static int framerate = 1;
-        private static int countframe = 0;
-        private static int weightLeft = 0;
-        private static int weightRight = 0;
 
         private static void VideoCaptureDevice_NewFrame(object sender, AForge.Video.NewFrameEventArgs eventArgs)
         {
@@ -139,16 +162,58 @@ namespace WebCam
             {
                 Bitmap tmp = (Bitmap)eventArgs.Frame.Clone();
 
+                AreaRect upLeft = GetAreaRect(tmp, 0, 0, 100, 50);
+                AreaRect upRight = GetAreaRect(tmp, 1180, 0, 100, 50);
+
+                if (CheckAreaWeight(upLeft, upRight))
+                {
 
 
-                context.Post(PostImage, MergeImage(GetBitmapArea(tmp, type.leftUp, 100), GetBitmapArea(tmp, type.rightUp, 100)) );
+                    if (CheckEqualsImageWeight(StoreImage, new Bitmap(tmp, new Size(100, 50))))
+                    {
+                        StoreImage = new Bitmap(tmp, new Size(100, 50));
+                        context.Post(PostImage, tmp);
+                    }
+                             
+                   
+                }
+
+                //  context.Post(PostImage, MergeImage(upLeft.ByteArray, upRight.ByteArray));
+
 
                 countframe = 0;
             }
             countframe++;
         }
 
+        private static bool CheckEqualsImageWeight(Bitmap img1, Bitmap img2)
+        {
+            bool result = false;
+            if (img1 != null)
+            {
+                int img1Weight = 0;
+                int img2Weight = 0;
 
+                for (int x = 0; x < img1.Width; x++)
+                {
+                    for (int y = 0; y < img1.Height; y++)
+                    {
+                        img1Weight += img1.GetPixel(x, y).R;
+                        img2Weight += img2.GetPixel(x, y).R;
+                    }
+                }
+                Debug.WriteLine(img1Weight + "    " + img2Weight);
+                if (img1Weight != img2Weight) result = true;
+            }
+            else
+            {
+                result = true;
+            }
+
+
+            return result;
+        }
+        private static bool CheckAreaWeight(AreaRect area1, AreaRect area2) => (area1.Weight > 20 && area2.Weight > 20) ? true : false;
 
         public static void PostImage(object o)
         {
@@ -165,33 +230,85 @@ namespace WebCam
                 btm.EndInit();
             }
 
-     
-            newFrame(btm, weightLeft, weightRight);
-            weightLeft = 0;
-            weightRight = 0;
+            newFrame(btm);
+
         }
 
-        enum type { leftUp, rightUp };
-
-
-        private static Bitmap GetBitmapArea(Bitmap source, type type, int size)
+        private static AreaRect GetAreaRect(Bitmap source, int x, int y, int size, int threshold)
         {
-            Bitmap newArea = new Bitmap(size, size);
+            byte[,] newArea = new byte[size, size];
+            int weight = 0;
+            int x1 = 0, y1 = 0;
+
+            for (int x0 = x; x0 < x + size; x0++)
+            {
+
+                for (int y0 = y; y0 < y+size; y0++)
+                {
+                    Color color = source.GetPixel(x0, y0);
+
+                    int grayScale = (int)((color.R + color.G + color.B) / 3);
+                    int val = 255;
+                    if (grayScale < threshold)
+                    {
+                        val = 0;
+                        weight++;
+                    }
+                    newArea[x1, y1] = isBinary ? (byte)val : (byte)grayScale;
+                    y1++;
+                }
+                y1 = 0;
+                x1++;
+            }
+
+            weight = weight * 100 / (size * size);
+
+            return new AreaRect(newArea, weight);
+
+
+
+        }
+
+
+     
+
+
+
+
+
+
+        private static byte[,] GetBitmapArea(Bitmap source, type type, int size)
+        {
+            byte[,] newArea = new byte[size, size];
+
+
+
             switch (type)
             {
                 case type.leftUp:
+                    weightLeft = 0;
                     for (int x = 0; x < size; x++)
                     {
                         for (int y = 0; y < size; y++)
                         {
                             Color color = source.GetPixel(x, y);
-                            newArea.SetPixel(x, y, color);
+
+                            int grayScale = (int)((color.R + color.G + color.B) / 3);
+                            int val = 255;
+                            if (grayScale < threshold)
+                            {
+                                val = 0;
+                                weightLeft++;
+                            }
+                            newArea[x, y] = isBinary ? (byte)val : (byte)grayScale;
                         }
 
                     }
 
+                    weightLeft = weightLeft * 100 / (size * size);
                     break;
                 case type.rightUp:
+                    weightRight = 0;
                     int x2 = 0, y2 = 0;
                     for (int x = source.Width - size; x < source.Width; x++)
                     {
@@ -199,14 +316,24 @@ namespace WebCam
                         for (int y = 0; y < size; y++)
                         {
                             Color color = source.GetPixel(x, y);
-                            newArea.SetPixel(x2,y2, color);
+
+                            int grayScale = (int)((color.R + color.G + color.B) / 3);
+                            int val = 255;
+                            if (grayScale < threshold)
+                            {
+                                val = 0;
+                                weightRight++;
+                            }
+                            newArea[x2, y2] = isBinary ? (byte)val : (byte)grayScale;
+
+
                             y2++;
                         }
                         y2 = 0;
                         x2++;
 
                     }
-
+                    weightRight =  weightRight * 100 / (size * size);
                     break;
             }
             return newArea;
@@ -214,56 +341,36 @@ namespace WebCam
 
         }
 
-        public static int step = 50;
 
-        private static Bitmap MergeImage(Bitmap img1, Bitmap img2)
+        private static Bitmap MergeImage(byte[,] img1, byte[,] img2)
         {
-            int width = img1.Width + img2.Width;
-            int height = img1.Height + img2.Height;
+    
+            int width = img1.GetLength(0) + img2.GetLength(0);
+            int height = img1.GetLength(1) + img2.GetLength(1);
 
             Bitmap tmp = new Bitmap(width, height);
 
-            for (int x = 0; x < img1.Width; x++)
+            for (int x = 0; x < img1.GetLength(0); x++)
             {
-                for (int y = 0; y < img1.Height; y++)
+                for (int y = 0; y < img1.GetLength(1); y++)
                 {
-                    Color color1 = img1.GetPixel(x, y);
-                    int grayScale = (int)((color1.R + color1.G + color1.B) / 3);
-                    int val = 255;
-                    if (grayScale < step)
-                    {
-                        val = 0;
-                        weightLeft++;
-                    }
+                    Color color = Color.FromArgb(255, img1[x, y], img1[x, y], img1[x, y]);
 
-                    Color nc = Color.FromArgb(color1.A, val, val, val);
-
-                    tmp.SetPixel(x, y, nc);
+                    tmp.SetPixel(x, y, color);
 
                 }
             }
 
-           weightLeft = 100 - ((img1.Width * img1.Height) - weightLeft) / 100;
-            for (int x = 0; x < img2.Width; x++)
+            for (int x = 0; x < img2.GetLength(0); x++)
             {
-                for (int y = 0; y < img2.Height; y++)
+                for (int y = 0; y < img2.GetLength(1); y++)
                 {
-                    Color color1 = img2.GetPixel(x, y);
-                    int grayScale = (int)((color1.R + color1.G + color1.B) / 3);
-                    int val =255;
-                    if (grayScale < step)
-                    {
-                        weightRight++;
-                        val = 0;
-                    }
 
-                    Color nc = Color.FromArgb(color1.A, val, val, val);
-
-                    tmp.SetPixel(x+ img1.Width, y, nc);
+                    Color color = Color.FromArgb(255, img2[x, y], img2[x, y], img2[x, y]);
+                    tmp.SetPixel(x+ img1.GetLength(0), y, color);
 
                 }
             }
-           weightRight = 100 - ((img2.Width * img2.Height) -  weightRight) /100;
             return tmp;
 
         }

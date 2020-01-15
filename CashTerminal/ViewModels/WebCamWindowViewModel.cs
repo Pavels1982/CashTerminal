@@ -75,11 +75,16 @@ namespace CashTerminal.ViewModels
 
 
 
-        private void WebCamConnect_NewFrame(BitmapImage image,int weightLeft, int weightRight)
+        //private void WebCamConnect_NewFrame(BitmapImage image, int weightLeft, int weightRight)
+        //{
+        //    this.Image = image;
+        //    this.WeightLeft = weightLeft;
+        //    this.WeightRight = weightRight;
+        //}
+        private void WebCamConnect_NewFrame(BitmapImage image)
         {
             this.Image = image;
-            this.WeightLeft = weightLeft;
-            this.WeightRight = weightRight;
+
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
