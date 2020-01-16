@@ -35,7 +35,7 @@ namespace WebCam
             WeightRight = wl;
         }
 
-        public byte[] GetHistogram(byte[,] ByteArray, ref int weight, int size = 12)
+        public byte[] GetHistogram(byte[,] ByteArray, ref int weight, int size = 8)
         {
             int offset = size / 2;
             byte[] Histogram = new byte[ByteArray.Length / size];
@@ -53,7 +53,7 @@ namespace WebCam
                         }
 
                     }
-                    Histogram[index] = (byte)(avrBrightnes / size);
+                    Histogram[index] = (byte)(avrBrightnes / (size+1));
                     weight += avrBrightnes;
                     index++;
                     avrBrightnes = 0;
@@ -247,9 +247,9 @@ namespace WebCam
                 upArea = new AreaRect(GetAreaRect(tmp, 0, 0, 96, Threshold), GetAreaRect(tmp, 1184, 0, 96, Threshold));
                 if (IsConfigurationMode)
                 {
-                   
-
-                    context.Post(PostImage, MergeImage(upArea.ByteArrayLeft, upArea.ByteArrayRight));
+                    Bitmap tmp2 = HistogramToBitmapFrom(upArea.HistogramLeft, upArea.HistogramRight);
+                    context.Post(PostImage, tmp2);
+                    //context.Post(PostImage, MergeImage(upArea.ByteArrayLeft, upArea.ByteArrayRight));
                 }
                 else
                 {
@@ -320,7 +320,7 @@ namespace WebCam
         {
             int coincidences = 0;
             int coincInArea = 0;
-            int threshold = 50;
+            int threshold = 100;
             int div = threshold / 2;
             if (AreaRectTemplates.Count > 0)
             {
@@ -360,7 +360,7 @@ namespace WebCam
                     Color color = Color.FromArgb(255, 0, 0, 0);
                     if (y < histogram[index])
                     {
-                         color = Color.FromArgb(255, 255, 255, 255);
+                        color = Color.FromArgb(255, 255, 255, 255);
                     }
 
                     btm.SetPixel(x, y, color);
@@ -373,6 +373,34 @@ namespace WebCam
 
 
         }
+
+
+        private static Bitmap HistogramToBitmapFrom(byte[] histogramLeft, byte[] histogramRight)
+        {
+            int arrayLenght = 23;
+
+            byte[,] left = new byte[arrayLenght, arrayLenght];
+            byte[,] right = new byte[arrayLenght, arrayLenght];
+
+            int index2 = 0;
+            for (int x = 0; x < arrayLenght; x++)
+            {
+                for (int y = 0; y < arrayLenght; y++)
+                {
+                    left[x, y] = histogramLeft[index2];
+                    right[x, y] = histogramRight[index2];
+                    index2++;
+                }
+               
+            }
+
+            return MergeImage(left, right);
+
+
+        }
+
+
+
 
         private static bool CheckEqualsImageWeight(Bitmap img1, Bitmap img2)
         {
