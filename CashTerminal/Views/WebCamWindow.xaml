@@ -8,7 +8,8 @@
         Title="WebCamWindow" Height="800" Width="542.136">
     <Grid>
         <StackPanel Orientation="Vertical">
-            <StackPanel Orientation="Horizontal" Height="Auto">
+           
+            <StackPanel Orientation="Horizontal" Height="Auto" Margin="0 30 0 0">
                 <ComboBox 
                     Width="150"
                     ItemsSource="{Binding ListOfWebCamDevice}" 
@@ -19,12 +20,30 @@
                         </DataTemplate>
                     </ComboBox.ItemTemplate>
                 </ComboBox>
-
                 <Button Width="60" Content="Старт" Command="{Binding StartStreamCommand}"/>
                 <Button Width="60" Content="Стоп" Command="{Binding StopStreamCommand}"/>
+                <CheckBox IsChecked="{Binding IsConfigurationMode}" Content="ConfigurationMode"/>
+
+                <CheckBox IsChecked="{Binding IsThreshold}" Content="IsBinary" />
+                <Slider Value="{Binding Threshold}" Width="155" Maximum="255" />
+                
             </StackPanel>
 
             <Image  Source="{Binding Image}" />
+
+            <Button Content="Add" Width="200" Command="{Binding AddTemplates}">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsConfigurationMode}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+
             <UniformGrid Columns="2">
                 <TextBlock Grid.Column="0" Text="{Binding WeightLeft}"/>
                 <TextBlock Grid.Column="1" Text="{Binding WeightRight}"/>

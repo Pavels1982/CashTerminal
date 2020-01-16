@@ -19,6 +19,46 @@ namespace CashTerminal.ViewModels
         public int WeightLeft { get; set; }
         public int WeightRight { get; set; }
 
+        private bool isConfigurationMode;
+        public bool IsConfigurationMode
+        {
+            get
+            {
+                return isConfigurationMode;
+            }
+            set
+            {
+                isConfigurationMode = value;
+                WebCamConnect.IsConfigurationMode = value;
+            }
+        }
+
+
+
+        private bool isThreshold;
+        public bool IsThreshold
+        {
+            get => isThreshold;
+
+            set
+            {
+                isThreshold = value;
+                if (!value) WebCamConnect.Threshold = null;
+
+            }
+        }
+
+        private int? threshold;
+        public int? Threshold
+        {
+            get => threshold;
+            set
+            {
+                    threshold = value;
+                    if (isThreshold) WebCamConnect.Threshold = value;
+            }
+        }
+
 
         private WebCamDevice selectedWebCamDevice;
         public WebCamDevice SelectedWebCamDevice
@@ -40,6 +80,17 @@ namespace CashTerminal.ViewModels
         }
 
         public BitmapImage Image { get; set; }
+
+        public ICommand AddTemplates
+        {
+            get
+            {
+                return new RelayCommand((o) => 
+                {
+                    WebCamConnect.AddTemplates();
+                });
+            }
+        }
 
 
         public ICommand StartStreamCommand
