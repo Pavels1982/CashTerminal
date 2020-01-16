@@ -20,17 +20,22 @@ namespace WebCam
         public byte[,] ByteArrayRight { get; set; }
         public byte[] HistogramLeft { get; set; }
         public byte[] HistogramRight { get; set; }
+        public int WeightLeft { get; set; }
+        public int WeightRight { get; set; }
 
         public AreaRect(byte[,] byteArrayLeft, byte[,] byteArrayRight)
         {
             this.ByteArrayLeft = byteArrayLeft;
             this.ByteArrayRight = byteArrayRight;
-
-            this.HistogramLeft = GetHistogram(this.ByteArrayLeft);
-            this.HistogramRight = GetHistogram(this.ByteArrayRight);
+            int wl = 0;
+            this.HistogramLeft = GetHistogram(this.ByteArrayLeft, ref wl);
+            WeightLeft = wl;
+            wl = 0;
+            this.HistogramRight = GetHistogram(this.ByteArrayRight, ref wl);
+            WeightRight = wl;
         }
 
-        public byte[] GetHistogram(byte[,] ByteArray, int size = 16)
+        public byte[] GetHistogram(byte[,] ByteArray, ref int weight, int size = 12)
         {
             int offset = size / 2;
             byte[] Histogram = new byte[ByteArray.Length / size];
@@ -49,12 +54,13 @@ namespace WebCam
 
                     }
                     Histogram[index] = (byte)(avrBrightnes / size);
+                    weight += avrBrightnes;
                     index++;
                     avrBrightnes = 0;
                 }
 
             }
-
+            weight /= ByteArray.Length;
             return Histogram;
 
             //for (int x = x0; x < x0 + offset; x++)
@@ -162,7 +168,7 @@ namespace WebCam
         }
 
         enum type { leftUp, rightUp };
-        private static int framerate = 2;
+        private static int framerate = 1;
         private static int countframe = 0;
         public static int? Threshold;
 
@@ -227,7 +233,7 @@ namespace WebCam
 
             if (countframe >= framerate)
             {
-                Bitmap tmp = (Bitmap)eventArgs.Frame.Clone();
+                Bitmap tmp = (Bitmap)eventArgs.Frame;
                 upArea = new AreaRect(GetAreaRect(tmp, 0, 0, 96, Threshold), GetAreaRect(tmp, 1184, 0, 96, Threshold));
                 if (IsConfigurationMode)
                 {
@@ -237,7 +243,12 @@ namespace WebCam
                 }
                 else
                 {
-                    if (CheckedArea())
+                    //if (CheckedArea())
+                    //{
+                    //    StoreImage = new Bitmap(tmp, new Size(320, 240));
+                    //    context.Post(PostImage, StoreImage);
+                    //}
+                    if (CheckeWeight())
                     {
                         StoreImage = new Bitmap(tmp, new Size(320, 240));
                         context.Post(PostImage, StoreImage);
@@ -269,12 +280,30 @@ namespace WebCam
             countframe++;
         }
 
+        private static bool CheckeWeight()
+        {
+            int coincidences = 0;
+            int coincInArea = 0;
+            int threshold = 5;
+
+            foreach (var area in AreaRectTemplates)
+            {
+
+                if (Math.Abs(upArea.WeightLeft - area.WeightLeft) < threshold)
+                    if (Math.Abs(upArea.WeightRight - area.WeightRight) < threshold) coincInArea++;
+
+                if (coincInArea > 0) coincidences++;
+                coincInArea = 0;
+            }
+            return coincidences > 0 ? true : false;
+        }
+
         private static bool CheckedArea()
         {
             int coincidences = 0;
             int coincInArea = 0;
             int threshold = 50;
-
+            int div = threshold / 2;
             if (AreaRectTemplates.Count > 0)
             {
                 int lenghtArea = upArea.HistogramLeft.Length;
@@ -284,12 +313,12 @@ namespace WebCam
 
                     for (int index = 0; index < lenghtArea; index++)
                     {
-                        if (upArea.HistogramLeft[index] < area.HistogramLeft[index] && upArea.HistogramLeft[index] > area.HistogramLeft[index] - threshold)
-                            if (upArea.HistogramRight[index] < area.HistogramRight[index] && upArea.HistogramRight[index] > area.HistogramRight[index] - threshold) coincInArea++;
+                        if (upArea.HistogramLeft[index] < area.HistogramLeft[index] + div && upArea.HistogramLeft[index] > area.HistogramLeft[index] - div)
+                        { if (upArea.HistogramRight[index] < area.HistogramRight[index] + div && upArea.HistogramRight[index] > area.HistogramRight[index] - div) coincInArea++; }
 
                     }
-                    int per = (coincInArea / 100) * 100;
-                    if (coincInArea > 20) coincidences++;
+                    int per = (int)(((double)coincInArea / lenghtArea) * 100);
+                    if (per > 90) coincidences++;
                     coincInArea = 0;
                 }
             }
