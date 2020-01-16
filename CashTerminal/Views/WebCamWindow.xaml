@@ -23,9 +23,11 @@
                 <Button Width="60" Content="Старт" Command="{Binding StartStreamCommand}"/>
                 <Button Width="60" Content="Стоп" Command="{Binding StopStreamCommand}"/>
                 <CheckBox IsChecked="{Binding IsConfigurationMode}" Content="ConfigurationMode"/>
+                <CheckBox IsChecked="{Binding IsWeightMode}" Content="Анализ по весам"/>
+                
 
-                <CheckBox IsChecked="{Binding IsThreshold}" Content="IsBinary" />
-                <Slider Value="{Binding Threshold}" Width="155" Maximum="255" />
+                <!--<CheckBox IsChecked="{Binding IsThreshold}" Content="IsBinary" />
+                <Slider Value="{Binding Threshold}" Width="155" Maximum="255" />-->
                 
             </StackPanel>
 

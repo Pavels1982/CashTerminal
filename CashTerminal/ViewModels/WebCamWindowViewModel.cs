@@ -33,6 +33,21 @@ namespace CashTerminal.ViewModels
             }
         }
 
+        private bool isWeightMode;
+        public bool IsWeightMode
+        {
+            get => isWeightMode;
+
+            set
+            {
+                isWeightMode = value;
+
+                WebCamConnect.IsWeightMode = value;
+
+            }
+        }
+
+
 
 
         private bool isThreshold;
@@ -47,6 +62,9 @@ namespace CashTerminal.ViewModels
 
             }
         }
+
+
+
 
         private int? threshold;
         public int? Threshold

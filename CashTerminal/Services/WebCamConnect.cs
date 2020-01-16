@@ -114,6 +114,7 @@ namespace WebCam
 
         public static bool IsConfigurationMode;
 
+
     //  public delegate void NewFrame_Event(BitmapImage image, int weightLeft, int weightRight);
         public delegate void NewFrame_Event(BitmapImage image);
 
@@ -131,10 +132,19 @@ namespace WebCam
 
         }
 
+        public static bool IsWeightMode { get; set; }
+
         public static void AddTemplates()
         {
             AreaRectTemplates.Add(upArea);
         }
+
+        public static void ClearTemplates()
+        {
+            AreaRectTemplates.Clear();
+        }
+
+
 
 
         private static WebCamDevice currentDevice;
@@ -243,16 +253,24 @@ namespace WebCam
                 }
                 else
                 {
-                    //if (CheckedArea())
-                    //{
-                    //    StoreImage = new Bitmap(tmp, new Size(320, 240));
-                    //    context.Post(PostImage, StoreImage);
-                    //}
-                    if (CheckeWeight())
+                    if (IsWeightMode)
                     {
-                        StoreImage = new Bitmap(tmp, new Size(320, 240));
-                        context.Post(PostImage, StoreImage);
+                        if (CheckeWeight())
+                        {
+                            StoreImage = new Bitmap(tmp, new Size(320, 240));
+                            context.Post(PostImage, StoreImage);
+                        }
                     }
+                    else
+                    {
+                        if (CheckedArea())
+                        {
+                            StoreImage = new Bitmap(tmp, new Size(320, 240));
+                            context.Post(PostImage, StoreImage);
+                        }
+                    }
+
+
                 }
 
 
@@ -318,8 +336,10 @@ namespace WebCam
 
                     }
                     int per = (int)(((double)coincInArea / lenghtArea) * 100);
-                    if (per > 90) coincidences++;
-                    coincInArea = 0;
+                    if (per > 90) { coincidences++; continue; }
+                    //if (per > 80) coincidences++;
+
+                   coincInArea = 0;
                 }
             }
             return coincidences > 0 ? true : false;
