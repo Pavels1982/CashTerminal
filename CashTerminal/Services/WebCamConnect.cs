@@ -14,13 +14,13 @@ using System.Windows.Media.Imaging;
 
 namespace WebCam
 {
-    public class AreaRectangle
+    public class AreaRect
     {
         public byte[] Pixels { get; set; }
         public Point AbsolutePos { get; set; }
         public int BoundWidth { get; set; }
 
-        public AreaRectangle(byte[] pixels, Point absolutePos, int width)
+        public AreaRect(byte[] pixels, Point absolutePos, int width)
         {
             this.Pixels = pixels;
             this.AbsolutePos = absolutePos;
@@ -29,84 +29,18 @@ namespace WebCam
 
     }
 
-    public class AreaRect
+    public class AreaRectGroup
     {
-        public byte[,] ByteArrayLeft { get; set; }
-        public byte[,] ByteArrayRight { get; set; }
-        public byte[] HistogramLeft { get; set; }
-        public byte[] HistogramRight { get; set; }
-        public int WeightLeft { get; set; }
-        public int WeightRight { get; set; }
+        public AreaRect LeftAreaRect { get; set; }
+        public AreaRect RightAreaRect { get; set; }
 
-        public AreaRect(byte[,] byteArrayLeft, byte[,] byteArrayRight)
+        public AreaRectGroup(AreaRect leftArea, AreaRect rightArea)
         {
-            this.ByteArrayLeft = byteArrayLeft;
-            this.ByteArrayRight = byteArrayRight;
-            int wl = 0;
-            this.HistogramLeft = GetHistogram(this.ByteArrayLeft, ref wl);
-            WeightLeft = wl;
-            wl = 0;
-            this.HistogramRight = GetHistogram(this.ByteArrayRight, ref wl);
-            WeightRight = wl;
+            this.LeftAreaRect = leftArea;
+            this.RightAreaRect = rightArea;
         }
-
-        public byte[] GetHistogram(byte[,] ByteArray, ref int weight, int size = 8)
-        {
-            int offset = size / 2;
-            byte[] Histogram = new byte[ByteArray.Length / size];
-            int avrBrightnes = 0;
-            int index = 0;
-            for (int x = 0; x < ByteArray.GetLength(0) - offset; x += offset)
-            {
-                for (int y = 0; y < ByteArray.GetLength(1) - offset; y += offset)
-                {
-                    for (int x1 = x; x1 < x + offset; x1++)
-                    {
-                        for (int y1 = y; y1 < y + offset; y1++)
-                        {
-                            avrBrightnes += ByteArray[x1, y1];
-                        }
-
-                    }
-                    Histogram[index] = (byte)(avrBrightnes / (size + 1));
-                    weight += avrBrightnes;
-                    index++;
-                    avrBrightnes = 0;
-                }
-
-            }
-            weight /= ByteArray.Length;
-            return Histogram;
-
-            //for (int x = x0; x < x0 + offset; x++)
-            //{
-
-            //    for (int y = y0; y < y0 + offset; y++)
-            //    {
-
-
-            //    }
-
-            //}
-
-
-
-
-            //Histogram[i] = ( ByteArray[x, y] + ByteArray[x + 1, y] + ByteArray[x, y + 1] + ByteArray[x + 1, y + 1]) / 4;
-
-            //for (int x = 0; x < ByteArray.GetLength(0) - offset; x = x + offset)
-            //{
-
-            //    for (int y = 0; y < ByteArray.GetLength(1) - offset; y = y + offset)
-            //    {
-
-
-            //    }
-
-            //}
-        }
-
     }
+
 
 
     public static class WebCamConnect
@@ -117,10 +51,10 @@ namespace WebCam
 
         private static List<WebCamDevice> deviceList = new List<WebCamDevice>();
 
-        private  static AreaRect upArea {  get;  set; }
-        private static AreaRect upRight;
+        private  static AreaRectGroup upArea {  get;  set; }
 
-        private static List<AreaRect> AreaRectTemplates { get; set; } = new List<AreaRect>();
+
+        private static List<AreaRectGroup> AreaRectTemplates { get; set; } = new List<AreaRectGroup>();
 
         public static bool IsStarted { get; set; }
         private static Bitmap StoreImage { get; set; }
@@ -129,8 +63,6 @@ namespace WebCam
 
         public static bool IsConfigurationMode;
 
-
-    //  public delegate void NewFrame_Event(BitmapImage image, int weightLeft, int weightRight);
         public delegate void NewFrame_Event(BitmapImage image);
 
         public static event NewFrame_Event NewFrame
@@ -181,9 +113,6 @@ namespace WebCam
 
                     videoCaptureDevice.Source = value.Moniker;
                     videoCaptureDevice.VideoResolution = videoCaptureDevice.VideoCapabilities[18];
-          
-                   //  videoCaptureDevice.DesiredFrameSize = new Size(320,240);
-
                 }
 
                 currentDevice = value;
@@ -259,191 +188,57 @@ namespace WebCam
             if (countframe >= framerate)
             {
                 Bitmap tmp = (Bitmap)eventArgs.Frame;
-                AreaRectangle leftUpArea = GetPixelsFromArea(tmp, 0, 0, 96, 4);
-                AreaRectangle RightUpArea = GetPixelsFromArea(tmp, 1184, 0, 96, 4);
 
-                //upArea = new AreaRect(GetAreaRect(tmp, 0, 0, 96, Threshold), GetAreaRect(tmp, 1184, 0, 96, Threshold));
+                AreaRect leftUpArea = GetPixelsFromArea(tmp, 0, 0, 96, 4);
+                AreaRect RightUpArea = GetPixelsFromArea(tmp, 1184, 0, 96, 4);
+                upArea = new AreaRectGroup(leftUpArea, RightUpArea);
+
                 if (IsConfigurationMode)
                 {
-                    //Bitmap tmp2 = HistogramToBitmapFrom(upArea.HistogramLeft, upArea.HistogramRight);
-                    //context.Post(PostImage, tmp2);
                     context.Post(PostImage, MergeImage(GetBitmapFrom(leftUpArea), GetBitmapFrom(RightUpArea)));
-                    // context.Post(PostImage, MergeImage(upArea.ByteArrayLeft, upArea.ByteArrayRight));
                 }
                 else
                 {
-                    if (IsWeightMode)
-                    {
-                        if (CheckeWeight())
-                        {
-                            StoreImage = new Bitmap(tmp, new Size(320, 240));
-                            context.Post(PostImage, StoreImage);
-                        }
-                    }
-                    else
-                    {
                         if (CheckedArea())
                         {
                             StoreImage = new Bitmap(tmp, new Size(640, 480));
                             context.Post(PostImage, StoreImage);
                         }
-                    }
-
-
                 }
 
-
-
-                //if (CheckAreaWeight(upLeft, upRight))
-                //{
-
-
-                //    if (CheckEqualsImageWeight(StoreImage, new Bitmap(tmp, new Size(100, 50))))
-                //    {
-                //        StoreImage = new Bitmap(tmp, new Size(100, 50));
-                //        context.Post(PostImage, tmp);
-                //    }
-
-
-                //}
-
-
-
-                // context.Post(PostImage, BitmapFromHistogram(upLeft.Histogram));
-
-
-                countframe = 0;
+               countframe = 0;
             }
             countframe++;
         }
 
-        private static bool CheckeWeight()
-        {
-            int coincidences = 0;
-            int coincInArea = 0;
-            int threshold = 5;
-
-            foreach (var area in AreaRectTemplates)
-            {
-
-                if (Math.Abs(upArea.WeightLeft - area.WeightLeft) < threshold)
-                    if (Math.Abs(upArea.WeightRight - area.WeightRight) < threshold) coincInArea++;
-
-                if (coincInArea > 0) coincidences++;
-                coincInArea = 0;
-            }
-            return coincidences > 0 ? true : false;
-        }
-
+     
         private static bool CheckedArea()
         {
             int coincidences = 0;
             int coincInArea = 0;
-            int threshold = 100;
+            int threshold = 70;
             int div = threshold / 2;
             if (AreaRectTemplates.Count > 0)
             {
-                int lenghtArea = upArea.HistogramLeft.Length;
+                int lenghtArea = upArea.LeftAreaRect.Pixels.Length;
 
                 foreach (var area in AreaRectTemplates)
                 {
 
                     for (int index = 0; index < lenghtArea; index++)
                     {
-                        if (upArea.HistogramLeft[index] < area.HistogramLeft[index] + div && upArea.HistogramLeft[index] > area.HistogramLeft[index] - div)
-                        { if (upArea.HistogramRight[index] < area.HistogramRight[index] + div && upArea.HistogramRight[index] > area.HistogramRight[index] - div) coincInArea++; }
+                        if (upArea.LeftAreaRect.Pixels[index] < area.LeftAreaRect.Pixels[index] + div && upArea.LeftAreaRect.Pixels[index] > area.LeftAreaRect.Pixels[index] - div)
+                        { if (upArea.RightAreaRect.Pixels[index] < area.RightAreaRect.Pixels[index] + div && upArea.RightAreaRect.Pixels[index] > area.RightAreaRect.Pixels[index] - div) coincInArea++; }
 
                     }
                     int per = (int)(((double)coincInArea / lenghtArea) * 100);
                     if (per > 90) { coincidences++; continue; }
-                    //if (per > 80) coincidences++;
 
-                   coincInArea = 0;
+                    coincInArea = 0;
                 }
             }
             return coincidences > 0 ? true : false;
 
-        }
-
-
-        private static Bitmap BitmapFromHistogram(byte[] histogram)
-        {
-            Bitmap btm = new Bitmap(histogram.GetLength(0), 255);
-            int index = 0;
-            for (int x = 0; x < histogram.GetLength(0); x++)
-            {
-
-                for (int y = 254; y > 0; y--)
-                {
-                    Color color = Color.FromArgb(255, 0, 0, 0);
-                    if (y < histogram[index])
-                    {
-                        color = Color.FromArgb(255, 255, 255, 255);
-                    }
-
-                    btm.SetPixel(x, y, color);
-
-                }
-                index++;
-            }
-
-            return btm;
-
-
-        }
-
-
-        private static Bitmap HistogramToBitmapFrom(byte[] histogramLeft, byte[] histogramRight)
-        {
-            int arrayLenght = 23;
-
-            byte[,] left = new byte[arrayLenght, arrayLenght];
-            byte[,] right = new byte[arrayLenght, arrayLenght];
-
-            int index2 = 0;
-            for (int x = 0; x < arrayLenght; x++)
-            {
-                for (int y = 0; y < arrayLenght; y++)
-                {
-                    left[x, y] = histogramLeft[index2];
-                    right[x, y] = histogramRight[index2];
-                    index2++;
-                }
-               
-            }
-
-            return MergeImage(left, right);
-
-
-        }
-
-
-        private static bool CheckEqualsImageWeight(Bitmap img1, Bitmap img2)
-        {
-            bool result = false;
-            if (img1 != null)
-            {
-                int img1Weight = 0;
-                int img2Weight = 0;
-
-                for (int x = 0; x < img1.Width; x++)
-                {
-                    for (int y = 0; y < img1.Height; y++)
-                    {
-                        img1Weight += img1.GetPixel(x, y).R;
-                        img2Weight += img2.GetPixel(x, y).R;
-                    }
-                }
-                Debug.WriteLine(img1Weight + "    " + img2Weight);
-                if (img1Weight != img2Weight) result = true;
-            }
-            else
-            {
-                result = true;
-            }
-
-
-            return result;
         }
 
 
@@ -466,7 +261,7 @@ namespace WebCam
 
         }
 
-        private static AreaRectangle GetPixelsFromArea(Bitmap source, int x, int y, int size, int scale)
+        private static AreaRect GetPixelsFromArea(Bitmap source, int x, int y, int size, int scale)
         {
             int areaWidth = (size / scale);
             byte[] pixels = new byte[areaWidth * areaWidth];
@@ -494,42 +289,10 @@ namespace WebCam
 
                 }
             }
-            return new AreaRectangle(pixels, new Point(x,y), areaWidth);
+            return new AreaRect(pixels, new Point(x,y), areaWidth);
         }
 
-
-
-        private static byte[,] GetAreaRect(Bitmap source, int x, int y, int size, int? threshold = null)
-        {
-            byte[,] newArea = new byte[size, size];
-            int x1 = 0, y1 = 0;
-            for (int x0 = x; x0 < x + size; x0++)
-            {
-
-                for (int y0 = y; y0 < y+size; y0++)
-                {
-                    Color color = source.GetPixel(x0, y0);
-
-                    int grayScale = (int)((color.R + color.G + color.B) / 3);
-                    int val = 255;
-                    if (grayScale < threshold)
-                    {
-                        val = 0;
-                    }
-
-                    newArea[x1, y1] = threshold != null ? (byte)val : (byte)grayScale;
-
-                    y1++;
-                }
-                y1 = 0;
-                x1++;
-            }
-
-            return newArea;
-        }
-
-
-        private static Bitmap GetBitmapFrom(AreaRectangle source)
+        private static Bitmap GetBitmapFrom(AreaRect source)
         {
             int size = source.BoundWidth;
 
@@ -569,46 +332,6 @@ namespace WebCam
             return tmp;
 
         }
-
-         private static Bitmap MergeImage(byte[,] img1, byte[,] img2)
-        {
-
-            int width = img1.GetLength(0) + img2.GetLength(0);
-            int height = img1.GetLength(1);
-
-            Bitmap tmp = new Bitmap(width, height);
-
-            for (int x = 0; x < img1.GetLength(0); x++)
-            {
-                for (int y = 0; y < img1.GetLength(1); y++)
-                {
-                    Color color = Color.FromArgb(255, img1[x, y], img1[x, y], img1[x, y]);
-
-                    tmp.SetPixel(x, y, color);
-
-                }
-            }
-
-            for (int x = 0; x < img2.GetLength(0); x++)
-            {
-                for (int y = 0; y < img2.GetLength(1); y++)
-                {
-
-                    Color color = Color.FromArgb(255, img2[x, y], img2[x, y], img2[x, y]);
-                    tmp.SetPixel(x+ img1.GetLength(0), y, color);
-
-                }
-            }
-            return tmp;
-
-        }
-
-
-
-
-
-
-
 
 
     }
