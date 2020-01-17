@@ -1,4 +1,6 @@
 ﻿using CashTerminal.Models;
+using OpenCvSharp;
+using OpenTK.Graphics.OpenGL;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -10,19 +12,16 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
 
-
 namespace WebCam
 {
     public class AreaRect
     {
         public byte[] Pixels { get; set; }
-        public Point AbsolutePos { get; set; }
         public int BoundWidth { get; set; }
 
-        public AreaRect(byte[] pixels, Point absolutePos, int width)
+        public AreaRect(byte[] pixels,  int width)
         {
             this.Pixels = pixels;
-            this.AbsolutePos = absolutePos;
             this.BoundWidth = width;
         }
 
@@ -52,6 +51,8 @@ namespace WebCam
 
         private static AreaRectGroup upArea { get; set; }
 
+        private static VideoCapture _capture;
+        private static  Mat _frame;
 
         private static List<AreaRectGroup> AreaRectTemplates { get; set; } = new List<AreaRectGroup>();
 
@@ -94,7 +95,7 @@ namespace WebCam
         }
 
 
-
+ 
 
         //private static WebCamDevice currentDevice;
         //public static WebCamDevice CurrentDevice
@@ -118,9 +119,9 @@ namespace WebCam
         //        }
 
         //        currentDevice = value;
-               
+
         //    }
-        
+
         //}
 
         enum type { leftUp, rightUp };
@@ -144,27 +145,50 @@ namespace WebCam
         {
             if (device != null)
             {
-             //   CurrentDevice = device;
+       
+                //   CurrentDevice = device;
             }
         }
 
+        private static Mat GrabFrame()
+        {
+            Mat image = new Mat();
+            _capture.Read(image);
+            return image;
+        }
+
+
+
         public static void Start()
         {
-            //if (videoCaptureDevice.SourceObject == null && !IsStarted)
-            //{
-            //    videoCaptureDevice.NewFrame += VideoCaptureDevice_NewFrame;
-            //    try
-            //    {
-            //        videoCaptureDevice.Start();
-            //        IsStarted = true;
-            //    }
-            //    catch
-            //    {
-            //        IsStarted = false;
-            //    }
+            if (_capture == null)
+            {
+                Mat image;
+                _capture = new VideoCapture(0);
+                _capture.Set(CaptureProperty.FrameWidth, 1280);
+                _capture.Set(CaptureProperty.FrameHeight, 960);
+                new Thread(() => 
+                {
 
-            //}
+                while (true)
+                {
+                        image = GrabFrame();
+
+                        VideoCaptureDevice_NewFrame(MatToBitmap(image));
+                      //  VideoCaptureDevice_NewFrame(MatToBitmap(image));
+                    }
+                }).Start();
+            }
+
         }
+
+        public static Bitmap MatToBitmap(Mat image)
+        {
+
+            return OpenCvSharp.Extensions.BitmapConverter.ToBitmap(image);
+        } 
+
+
 
         public static void Stop()
         {
@@ -184,12 +208,12 @@ namespace WebCam
 
 
 
-        private static void VideoCaptureDevice_NewFrame(object sender)
+        private static void VideoCaptureDevice_NewFrame(Bitmap frame)
         {
 
             if (countframe >= framerate)
             {
-                Bitmap tmp = null;
+                Bitmap tmp = frame;
 
                 AreaRect leftUpArea = GetPixelsFromArea(tmp, 0, 0, 96, 4);
                 AreaRect RightUpArea = GetPixelsFromArea(tmp, 1184, 0, 96, 4);
@@ -205,13 +229,14 @@ namespace WebCam
                     {
                         if (!IsImageRecived)
                         {
-                            context.Post(PostImage, new Bitmap(tmp, new Size(640, 480)));
-                            StoreImage = new Bitmap(tmp, new Size(32, 24));
+                            //PostImage(new Bitmap(tmp, new System.Drawing.Size(640, 480)));
+                            context.Post(PostImage, new Bitmap(tmp, new System.Drawing.Size(640, 480)));
+                            StoreImage = new Bitmap(tmp, new System.Drawing.Size(32, 24));
                             IsImageRecived = true;
                         }
                         else
                         {
-                           if (!CheckEqualsImage(new Bitmap(tmp, new Size(32, 24)), StoreImage)) IsImageRecived = false;
+                           if (!CheckEqualsImage(new Bitmap(tmp, new System.Drawing.Size(32, 24)), StoreImage)) IsImageRecived = false;
                         }
 
                     }
@@ -253,7 +278,6 @@ namespace WebCam
             return per < 90 ? false : true;
         }
      
-
         private static bool CheckedArea()
         {
             int coincidences = 0;
@@ -329,7 +353,7 @@ namespace WebCam
 
                 }
             }
-            return new AreaRect(pixels, new Point(x,y), areaWidth);
+            return new AreaRect(pixels, areaWidth);
         }
 
         private static Bitmap GetBitmapFrom(AreaRect source)
