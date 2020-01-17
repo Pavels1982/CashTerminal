@@ -202,13 +202,22 @@ namespace WebCam
                 }
                 else
                 {
-                        if (CheckedArea())
+                    if (CheckedArea())
+                    {
+                        if (!IsImageRecived)
                         {
-
                             context.Post(PostImage, new Bitmap(tmp, new Size(640, 480)));
-
                             StoreImage = new Bitmap(tmp, new Size(32, 24));
+                            IsImageRecived = true;
                         }
+                        else
+                        {
+                           if (!CheckEqualsImage(new Bitmap(tmp, new Size(32, 24)), StoreImage)) IsImageRecived = false;
+                        }
+
+                    }
+
+
                 }
 
                countframe = 0;
@@ -218,8 +227,31 @@ namespace WebCam
 
         private static bool CheckEqualsImage(Bitmap source, Bitmap store)
         {
+            int width = source.Width-1;
+            int height = source.Height-1;
+            int coincidences = 0;
+            int grayScaleSource = 0;
+            int grayScaleStore = 0;
+            int err = 20;
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
 
-            return false;
+                    Color color1 = source.GetPixel(x, y);
+                    Color color2 = store.GetPixel(x, y);
+
+                    grayScaleSource = (int)((color1.R + color1.G + color1.B) / 3);
+                    grayScaleStore = (int)((color2.R + color2.G + color2.B) / 3);
+
+                    if (grayScaleSource > grayScaleStore - err && grayScaleSource < grayScaleStore + err) coincidences++;
+
+
+                }
+            }
+            int per = (int)(((double)coincidences / (width * height)) * 100);
+
+            return per < 90 ? false : true;
         }
      
 
@@ -227,7 +259,7 @@ namespace WebCam
         {
             int coincidences = 0;
             int coincInArea = 0;
-            int threshold = 70;
+            int threshold = 100;
             int div = threshold / 2;
             if (AreaRectTemplates.Count > 0)
             {
@@ -243,7 +275,7 @@ namespace WebCam
 
                     }
                     int per = (int)(((double)coincInArea / lenghtArea) * 100);
-                    if (per > 90) { coincidences++; continue; }
+                    if (per > 80) { coincidences++; continue; }
 
                     coincInArea = 0;
                 }
@@ -254,7 +286,6 @@ namespace WebCam
 
         public static void PostImage(object o)
         {
-            IsImageRecived = true;
             BitmapImage btm = new BitmapImage();
             using (MemoryStream memStream2 = new MemoryStream())
             {
