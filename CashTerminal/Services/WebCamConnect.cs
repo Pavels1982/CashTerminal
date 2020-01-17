@@ -14,6 +14,19 @@ using System.Windows.Media.Imaging;
 
 namespace WebCam
 {
+    public class AreaRectangle
+    {
+        public byte[] Pixels { get; set; }
+        public Point Absolute { get; set; }
+
+        public AreaRectangle(byte[] pixels, Point absolute)
+        {
+            this.Pixels = pixels;
+            this.Absolute = absolute;
+        }
+
+    }
+
     public class AreaRect
     {
         public byte[,] ByteArrayLeft { get; set; }
@@ -53,7 +66,7 @@ namespace WebCam
                         }
 
                     }
-                    Histogram[index] = (byte)(avrBrightnes / (size+1));
+                    Histogram[index] = (byte)(avrBrightnes / (size + 1));
                     weight += avrBrightnes;
                     index++;
                     avrBrightnes = 0;
@@ -247,9 +260,9 @@ namespace WebCam
                 upArea = new AreaRect(GetAreaRect(tmp, 0, 0, 96, Threshold), GetAreaRect(tmp, 1184, 0, 96, Threshold));
                 if (IsConfigurationMode)
                 {
-                    Bitmap tmp2 = HistogramToBitmapFrom(upArea.HistogramLeft, upArea.HistogramRight);
-                    context.Post(PostImage, tmp2);
-                    //context.Post(PostImage, MergeImage(upArea.ByteArrayLeft, upArea.ByteArrayRight));
+                    //Bitmap tmp2 = HistogramToBitmapFrom(upArea.HistogramLeft, upArea.HistogramRight);
+                    //context.Post(PostImage, tmp2);
+                    context.Post(PostImage, MergeImage(upArea.ByteArrayLeft, upArea.ByteArrayRight));
                 }
                 else
                 {
@@ -265,7 +278,7 @@ namespace WebCam
                     {
                         if (CheckedArea())
                         {
-                            StoreImage = new Bitmap(tmp, new Size(320, 240));
+                            StoreImage = new Bitmap(tmp, new Size(640, 480));
                             context.Post(PostImage, StoreImage);
                         }
                     }
@@ -449,6 +462,110 @@ namespace WebCam
             newFrame(btm);
 
         }
+        private static byte[] GetPixelsFromArea(Bitmap source, int x, int y, int size, int scale, int? threshold = null)
+        {
+            int areaWidth = (size / scale);
+
+            byte[] pixels = new byte[areaWidth * areaWidth];
+            int offSet = size - scale;
+
+            int index = 0;
+
+
+            for (int y0 = y; y0 < y + size; y0 += areaWidth)
+            {
+                for (int x0 = x; x0 < x + size; x0 += areaWidth)
+                {
+                    for (int y1 = y0; y1 < y0 + areaWidth; y1++)
+                    {
+                        for (int x1 = x0; x1 < x0 + areaWidth; x1++)
+                        {
+                            Color color = source.GetPixel(x0, y0);
+
+                            int grayScale = 0;
+
+                            if (threshold != null)
+                            {
+                                int val = 255;
+                                if (grayScale < threshold)
+                                {
+                                    val = 0;
+                                }
+                                grayScale = val;
+                            }
+                            else
+                            {
+                                grayScale = (int)((color.R + color.G + color.B) / 3);
+                            }
+
+
+                        }
+                    }
+                }
+            }
+
+
+
+
+
+
+
+            for (int x0 = x; x0 < x + size; x0 += areaWidth)
+            {
+                for (int y0 = y; y0 < y + size; y0 += areaWidth)
+                {
+                    for (int x1 = x0; x1 < x0 + areaWidth; x1++)
+                    {
+                        for (int y1 = y; y1 < y + areaWidth; y1++)
+                        {
+
+
+                        }
+                    }
+                }
+            }
+
+
+
+
+
+
+            //for (int y0 = y; y0 < y + size; y += offSet)
+            //{
+            //    int x0 = x;
+            //    while (x0 < x + scaleArea.GetLength(0))
+            //    {
+            //        Color color = source.GetPixel(x0, y0);
+
+            //        int grayScale = 0;
+            //        if (threshold != null)
+            //        {
+            //            int val = 255;
+            //            if (grayScale < threshold)
+            //            {
+            //                val = 0;
+            //            }
+            //            grayScale = val;
+            //        }
+            //        else
+            //        {
+            //            grayScale = (int)((color.R + color.G + color.B) / 3);
+            //        }
+
+
+
+            //        pixels[index] = (byte)grayScale;
+            //        index++;
+            //        x0++;
+            //    }
+
+
+            //}
+            return pixels;
+
+        }
+
+
 
         private static byte[,] GetAreaRect(Bitmap source, int x, int y, int size, int? threshold = null)
         {
