@@ -1,5 +1,7 @@
 ﻿using AForge.Video.DirectShow;
 using CashTerminal.Models;
+using Emgu.CV;
+using Emgu.CV.Structure;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -198,7 +200,7 @@ namespace WebCam
 
                 if (IsConfigurationMode)
                 {
-                    context.Post(PostImage, MergeImage(GetBitmapFrom(leftUpArea), GetBitmapFrom(RightUpArea)));
+                    context.Post(PostImageConfig, MergeImage(GetBitmapFrom(leftUpArea), GetBitmapFrom(RightUpArea)));
                 }
                 else
                 {
@@ -251,7 +253,7 @@ namespace WebCam
             }
             int per = (int)(((double)coincidences / (width * height)) * 100);
 
-            return per < 90 ? false : true;
+            return per < 86 ? false : true;
         }
      
 
@@ -284,8 +286,9 @@ namespace WebCam
 
         }
 
-        public static void PostImage(object o)
+        public static void PostImageConfig(object o)
         {
+         
             BitmapImage btm = new BitmapImage();
             using (MemoryStream memStream2 = new MemoryStream())
             {
@@ -298,8 +301,38 @@ namespace WebCam
                 btm.EndInit();
             }
 
+
+
             newFrame(btm);
 
+        }
+
+
+
+        public static void PostImage(object o)
+        {
+            var imginput = new Image<Bgr, byte>(o as Bitmap);
+
+            Image<Gray, Byte> myImage = new Image<Gray, Byte>(o as Bitmap).ThresholdBinary(new Gray(150), new Gray(255));
+            Emgu.CV.Util.VectorOfVectorOfPoint countours = new Emgu.CV.Util.VectorOfVectorOfPoint();
+            Mat hier = new Mat();
+            CvInvoke.FindContours(myImage, countours, hier, Emgu.CV.CvEnum.RetrType.List, Emgu.CV.CvEnum.ChainApproxMethod.ChainApproxSimple);
+            CvInvoke.DrawContours(imginput, countours, -1, new MCvScalar(255, 0, 0, 0));
+
+        
+            BitmapImage btm = new BitmapImage();
+            using (MemoryStream memStream2 = new MemoryStream())
+            {
+                (imginput.Bitmap).Save(memStream2, System.Drawing.Imaging.ImageFormat.Png);
+                memStream2.Position = 0;
+                btm.BeginInit();
+                btm.CacheOption = BitmapCacheOption.OnLoad;
+                btm.UriSource = null;
+                btm.StreamSource = memStream2;
+                btm.EndInit();
+            }
+
+            newFrame(btm);
         }
 
         private static AreaRect GetPixelsFromArea(Bitmap source, int x, int y, int size, int scale)
