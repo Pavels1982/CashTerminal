@@ -1,5 +1,4 @@
-﻿using AForge.Video.DirectShow;
-using CashTerminal.Models;
+﻿using CashTerminal.Models;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -47,7 +46,7 @@ namespace WebCam
     {
         private static SynchronizationContext context = SynchronizationContext.Current;
 
-        private static VideoCaptureDevice videoCaptureDevice = new VideoCaptureDevice();
+       // private static VideoCaptureDevice videoCaptureDevice = new VideoCaptureDevice();
 
         private static List<WebCamDevice> deviceList = new List<WebCamDevice>();
 
@@ -97,32 +96,32 @@ namespace WebCam
 
 
 
-        private static WebCamDevice currentDevice;
-        public static WebCamDevice CurrentDevice
-        {
-            get
-            {
-                return currentDevice;
-            }
+        //private static WebCamDevice currentDevice;
+        //public static WebCamDevice CurrentDevice
+        //{
+        //    get
+        //    {
+        //        return currentDevice;
+        //    }
 
-            private set
-            {
-                if (value != null)
-                {
-                    if (videoCaptureDevice.IsRunning)
-                    {
-                        videoCaptureDevice.Stop();
-                    }
+        //    private set
+        //    {
+        //        if (value != null)
+        //        {
+        //            if (videoCaptureDevice.IsRunning)
+        //            {
+        //                videoCaptureDevice.Stop();
+        //            }
 
-                    videoCaptureDevice.Source = value.Moniker;
-                    videoCaptureDevice.VideoResolution = videoCaptureDevice.VideoCapabilities[18];
-                }
+        //            videoCaptureDevice.Source = value.Moniker;
+        //            videoCaptureDevice.VideoResolution = videoCaptureDevice.VideoCapabilities[18];
+        //        }
 
-                currentDevice = value;
+        //        currentDevice = value;
                
-            }
+        //    }
         
-        }
+        //}
 
         enum type { leftUp, rightUp };
         private static int framerate = 1;
@@ -132,12 +131,12 @@ namespace WebCam
 
         public static List<WebCamDevice> GetDevices()
         {
-            FilterInfoCollection videoDevices = new FilterInfoCollection(FilterCategory.VideoInputDevice);
+            //FilterInfoCollection videoDevices = new FilterInfoCollection(FilterCategory.VideoInputDevice);
 
-            foreach (FilterInfo device in videoDevices)
-            {
-                deviceList.Add(new WebCamDevice(device.Name, device.MonikerString));
-            }
+            //foreach (FilterInfo device in videoDevices)
+            //{
+            //    deviceList.Add(new WebCamDevice(device.Name, device.MonikerString));
+            //}
             return deviceList;
         }
 
@@ -145,52 +144,52 @@ namespace WebCam
         {
             if (device != null)
             {
-                CurrentDevice = device;
+             //   CurrentDevice = device;
             }
         }
 
         public static void Start()
         {
-            if (videoCaptureDevice.SourceObject == null && !IsStarted)
-            {
-                videoCaptureDevice.NewFrame += VideoCaptureDevice_NewFrame;
-                try
-                {
-                    videoCaptureDevice.Start();
-                    IsStarted = true;
-                }
-                catch
-                {
-                    IsStarted = false;
-                }
+            //if (videoCaptureDevice.SourceObject == null && !IsStarted)
+            //{
+            //    videoCaptureDevice.NewFrame += VideoCaptureDevice_NewFrame;
+            //    try
+            //    {
+            //        videoCaptureDevice.Start();
+            //        IsStarted = true;
+            //    }
+            //    catch
+            //    {
+            //        IsStarted = false;
+            //    }
 
-            }
+            //}
         }
 
         public static void Stop()
         {
 
-                videoCaptureDevice.NewFrame -= VideoCaptureDevice_NewFrame;
+                //videoCaptureDevice.NewFrame -= VideoCaptureDevice_NewFrame;
 
-                try
-                {
-                    videoCaptureDevice.Stop();
-                    IsStarted = false;
-                }
-                catch
-                {
-                IsStarted = false;
-                }
+                //try
+                //{
+                //    videoCaptureDevice.Stop();
+                //    IsStarted = false;
+                //}
+                //catch
+                //{
+                //IsStarted = false;
+                //}
         }
 
 
 
-        private static void VideoCaptureDevice_NewFrame(object sender, AForge.Video.NewFrameEventArgs eventArgs)
+        private static void VideoCaptureDevice_NewFrame(object sender)
         {
 
             if (countframe >= framerate)
             {
-                Bitmap tmp = (Bitmap)eventArgs.Frame;
+                Bitmap tmp = null;
 
                 AreaRect leftUpArea = GetPixelsFromArea(tmp, 0, 0, 96, 4);
                 AreaRect RightUpArea = GetPixelsFromArea(tmp, 1184, 0, 96, 4);
