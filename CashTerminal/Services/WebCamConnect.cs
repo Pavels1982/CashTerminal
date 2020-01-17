@@ -51,13 +51,16 @@ namespace WebCam
 
         private static List<WebCamDevice> deviceList = new List<WebCamDevice>();
 
-        private  static AreaRectGroup upArea {  get;  set; }
+        private static AreaRectGroup upArea { get; set; }
 
 
         private static List<AreaRectGroup> AreaRectTemplates { get; set; } = new List<AreaRectGroup>();
 
         public static bool IsStarted { get; set; }
+
         private static Bitmap StoreImage { get; set; }
+        private static Bitmap NewImage { get; set; }
+        private static bool IsImageRecived { get; set;}
 
         private static event NewFrame_Event newFrame;
 
@@ -201,8 +204,10 @@ namespace WebCam
                 {
                         if (CheckedArea())
                         {
-                            StoreImage = new Bitmap(tmp, new Size(640, 480));
-                            context.Post(PostImage, StoreImage);
+
+                            context.Post(PostImage, new Bitmap(tmp, new Size(640, 480)));
+
+                            StoreImage = new Bitmap(tmp, new Size(32, 24));
                         }
                 }
 
@@ -211,7 +216,13 @@ namespace WebCam
             countframe++;
         }
 
+        private static bool CheckEqualsImage(Bitmap source, Bitmap store)
+        {
+
+            return false;
+        }
      
+
         private static bool CheckedArea()
         {
             int coincidences = 0;
@@ -241,10 +252,9 @@ namespace WebCam
 
         }
 
-
         public static void PostImage(object o)
         {
-
+            IsImageRecived = true;
             BitmapImage btm = new BitmapImage();
             using (MemoryStream memStream2 = new MemoryStream())
             {
