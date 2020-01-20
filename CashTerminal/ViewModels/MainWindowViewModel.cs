@@ -6,13 +6,16 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Drawing;
 using System.Globalization;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using WebCam;
 
 namespace CashTerminal.ViewModels
 {
@@ -21,6 +24,8 @@ namespace CashTerminal.ViewModels
         public event PropertyChangedEventHandler PropertyChanged;
 
         public ObservableCollection<Iitem> ItemList { get; set; } = new ObservableCollection<Iitem>();
+        private List<Color> ObjectColorList { get; set; } = new List<Color>();
+
 
         private ObservableCollection<Dish> basketList = new ObservableCollection<Dish>();
         public ObservableCollection<Dish> BasketList
@@ -43,15 +48,15 @@ namespace CashTerminal.ViewModels
         {
             get
             {
-                return totalPrice; 
+                return totalPrice;
             }
             set
             {
                 totalPrice = value;
             }
         }
-           
- 
+
+
 
 
         private Dish selectedBasketItem;
@@ -67,12 +72,13 @@ namespace CashTerminal.ViewModels
                 selectedBasketItem = value;
                 if (value != null)
                 {
-                    CalculatorValue = selectedBasketItem.Number.ToString().Replace("," ,".");
+                    CalculatorValue = selectedBasketItem.Number.ToString().Replace(",", ".");
                 }
             }
 
         }
 
+      
         private DishData DishData { get; set; }
 
         public string CalculatorValue { get; set; } = "0";
@@ -107,13 +113,32 @@ namespace CashTerminal.ViewModels
             {
                 return new RelayCommand((o) =>
                 {
-                    if (o != null)
-                    {
-                        BasketList.Remove(o as Dish);
-                        CalculateBasketPrice();
-                    }
-
+                    DeleteItemFromBasket(o);
                 });
+            }
+        }
+
+        private void DeleteItemFromBasket(object o)
+        {
+            if (o != null)
+            {
+                Dish removableObject = o as Dish;
+                //(ItemList.Where(i => i.Name == removableObject.Name).First() as Dish).Color = new Color();
+                DishData.DishGroup.ForEach(group =>
+                {
+                    foreach (Dish dish in group.ListDishes)
+                    {
+                        if (dish.Color == removableObject.Color)
+                        {
+                            dish.Color = new Color();
+                        }
+                    }
+                });
+                BasketList.Remove(removableObject);
+                CalculateBasketPrice();
+
+               
+
             }
         }
 
@@ -168,16 +193,44 @@ namespace CashTerminal.ViewModels
                         }
                         else
                         {
-                            Dish clone = (o as Dish).Clone();
-                            BasketList.Add(clone);
-                            SelectedBasketItem = clone;
-                            CalculateBasketPrice();
-
+                            AddToBasket(o);
+                         
                         }
                     }
 
                 });
             }
+        }
+
+        private void AddToBasket(object o, bool isNewData = true)
+        {
+            Dish clone = (o as Dish).Clone();
+
+            BasketList.Add(clone);
+            SelectedBasketItem = clone;
+            CalculateBasketPrice();
+
+            if (isNewData)
+            {
+                try
+                {
+                    Color Color = ObjectColorList[SelectedBasketItem.Index - 1];
+                    Color newColor = Color.FromArgb(Color.R, Color.G, Color.B);
+                    DishData.DishGroup.ForEach(group =>
+                    {
+                        foreach (Dish dish in group.ListDishes)
+                        {
+                            if (dish.Name == clone.Name)
+                            {
+                                dish.Color = newColor;
+                            }
+                        }
+                    });
+
+                }
+                catch { }
+            }
+
         }
 
         /// <summary>
@@ -188,11 +241,53 @@ namespace CashTerminal.ViewModels
             DishData = new DishData();
             ItemList = GetDishGroupList();
 
+          //  WebCamConnect.SetDevice(WebCamConnect.GetDevices().First());
+            
+         //   WebCamConnect.Start();
+
             WebCamWindow win = new WebCamWindow();
             win.Show();
+            WebCamConnect.NewObject += WebCamConnect_NewObject;
         }
 
-  
+        private void WebCamConnect_NewObject(List<System.Drawing.Color> colors)
+        {
+            ObjectColorList.Clear();
+            colors.ForEach(col => ObjectColorList.Add(col));
+            foreach (var color in colors)
+            {
+                DishData.DishGroup.ForEach(group => 
+                
+                {
+                    foreach (var dish in group.ListDishes)
+                    {
+                        if (CheckColor(color, dish.Color))
+                        {
+                             AddToBasket(dish, false);
+                        }
+
+                    }
+
+
+                });
+
+            }
+
+           }
+
+        private bool CheckColor(Color color1, Color color2)
+        {
+            int err = 7;
+            if (color1.R > color2.R - err && color1.R < color2.R + err)
+                if (color1.G > color2.G - err && color1.G < color2.G + err)
+                    if (color1.B > color2.B - err && color1.B < color2.B + err) return true;
+            return false;
+        }
+
+
+
+
+
         private ObservableCollection<Iitem> GetDishGroupList()
         {
             ObservableCollection<Iitem> result = new ObservableCollection<Iitem>();

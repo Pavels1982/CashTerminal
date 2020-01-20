@@ -46,10 +46,27 @@
                 </Button.Style>
             </Button>
 
-            <UniformGrid Columns="2">
+            <ScrollViewer VerticalScrollBarVisibility="Visible">
+                <ListView ItemsSource="{Binding ObjectList}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                            <UniformGrid Columns="5" />
+                        </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Vertical" VerticalAlignment="Stretch">
+                            <Image Source="{Binding}" HorizontalAlignment="Center" VerticalAlignment="Top" Width="100" Height="100"/>
+                                                    </StackPanel>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+                </ScrollViewer>
+
+                    <!--<UniformGrid Columns="2">
                 <TextBlock Grid.Column="0" Text="{Binding WeightLeft}"/>
                 <TextBlock Grid.Column="1" Text="{Binding WeightRight}"/>
-            </UniformGrid>
+            </UniformGrid>-->
 
         </StackPanel>
 

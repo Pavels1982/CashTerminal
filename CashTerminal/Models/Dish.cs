@@ -1,6 +1,7 @@
 ﻿using CashTerminal.Services;
 using System;
 using System.ComponentModel;
+using System.Drawing;
 
 namespace CashTerminal.Models
 {
@@ -25,6 +26,8 @@ namespace CashTerminal.Models
         /// </summary>
         public int Id { get; set; }
 
+
+        public Color Color { get; set; } = new Color();
         /// <summary>
         /// Get or set наименование блюда.
         /// </summary>

@@ -51,3 +51,7 @@ D:\CashTerminal\CashTerminal\bin\Debug\sv\ZedGraph.resources.dll
 D:\CashTerminal\CashTerminal\bin\Debug\tr\ZedGraph.resources.dll
 D:\CashTerminal\CashTerminal\bin\Debug\zh-cn\ZedGraph.resources.dll
 D:\CashTerminal\CashTerminal\bin\Debug\zh-tw\ZedGraph.resources.dll
+D:\CashTerminal\CashTerminal\bin\Debug\AForge.Imaging.dll
+D:\CashTerminal\CashTerminal\bin\Debug\AForge.Math.dll
+D:\CashTerminal\CashTerminal\bin\Debug\AForge.Imaging.xml
+D:\CashTerminal\CashTerminal\bin\Debug\AForge.Math.xml
