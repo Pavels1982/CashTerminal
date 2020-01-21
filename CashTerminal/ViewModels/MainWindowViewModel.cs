@@ -131,7 +131,7 @@ namespace CashTerminal.ViewModels
                     {
                         if (dish.Name == removableObject.Name)
                         {
-                            dish.ObjectStruct = new ObjectStruct(new Color(), 0);
+                            dish.ObjectStruct = new ObjectStruct(new Color(), 0,null);
                         }
                     }
                 });
@@ -260,7 +260,9 @@ namespace CashTerminal.ViewModels
            
             foreach (var obj in findObject)
             {
-                Debug.WriteLine(string.Format("Color: {0}, {1}, {2}", obj.Color.R, obj.Color.G, obj.Color.B));
+                Debug.WriteLine(string.Format("ColorRGB: {0}, {1}, {2}", obj.Color.R, obj.Color.G, obj.Color.B));
+                Debug.WriteLine(string.Format("ColorHSV: {0}, {1}, {2}", obj.HSVColor.Hue, obj.HSVColor.Saturation, obj.HSVColor.Value));
+                Debug.WriteLine("--");
                 bool isObjExist = false;
                 DishData.DishGroup.ForEach(group => 
                 
@@ -285,25 +287,28 @@ namespace CashTerminal.ViewModels
 
            }
 
-        //private bool CheckColor(Color color1, Color color2)
+
+        //private bool CheckObjectStruct(ObjectStruct based, ObjectStruct current)
         //{
-        //    int err = 11;
-        //    if (color1.R > color2.R - err && color1.R < color2.R + err)
-        //        if (color1.G > color2.G - err && color1.G < color2.G + err)
-        //            if (color1.B > color2.B - err && color1.B < color2.B + err) return true;
+        //    int err = 10;
+        //    int errR = 21;
+        //    if (current.Color.R > based.Color.R - errR && current.Color.R < based.Color.R + errR)
+        //        if (current.Color.G > based.Color.G - err && current.Color.G < based.Color.G + err)
+        //            if (current.Color.B > based.Color.B - err && current.Color.B < based.Color.B + err)
+        //            {
+        //                if (current.Radius > based.Radius - 10 && current.Radius < based.Radius + 10) return true;
+        //            }
+
         //    return false;
         //}
+
 
         private bool CheckObjectStruct(ObjectStruct based, ObjectStruct current)
         {
             int err = 10;
-            int errR = 21;
-            if (current.Color.R > based.Color.R - errR && current.Color.R < based.Color.R + errR)
-                if (current.Color.G > based.Color.G - err && current.Color.G < based.Color.G + err)
-                    if (current.Color.B > based.Color.B - err && current.Color.B < based.Color.B + err)
-                    {
-                        if (current.Radius > based.Radius - 10 && current.Radius < based.Radius + 10) return true;
-                    }
+            if (current.HSVColor.Hue > based.HSVColor.Hue - err && current.HSVColor.Hue < based.HSVColor.Hue + err)
+                  if (current.Radius > based.Radius - 10 && current.Radius < based.Radius + 10) return true;
+        
 
             return false;
         }

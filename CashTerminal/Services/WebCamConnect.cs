@@ -10,8 +10,10 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -165,7 +167,7 @@ namespace WebCam
                     videoCaptureDevice.Source = value.Moniker;
                     videoCaptureDevice.VideoResolution = videoCaptureDevice.VideoCapabilities[18];
 
-                    videoCaptureDevice.SetCameraProperty(CameraControlProperty.Exposure, 4, AForge.Video.DirectShow.CameraControlFlags.Manual);
+                    //videoCaptureDevice.SetCameraProperty(CameraControlProperty.Exposure, 4, AForge.Video.DirectShow.CameraControlFlags.Manual);
                    // videoCaptureDevice.SetCameraProperty(CameraControlProperty.Focus, 8, AForge.Video.DirectShow.CameraControlFlags.Manual);
                     //videoCaptureDevice.SetCameraProperty(CameraControlProperty.Iris, 16, AForge.Video.DirectShow.CameraControlFlags.Manual);
 
@@ -255,7 +257,7 @@ namespace WebCam
         {
 
             videoCaptureDevice.NewFrame -= VideoCaptureDevice_NewFrame;
-            videoCaptureDevice.SetCameraProperty(CameraControlProperty.Exposure, 0, AForge.Video.DirectShow.CameraControlFlags.Auto);
+          //  videoCaptureDevice.SetCameraProperty(CameraControlProperty.Exposure, 0, AForge.Video.DirectShow.CameraControlFlags.Auto);
 
             try
             {
@@ -290,17 +292,22 @@ namespace WebCam
                 //   filter.ApplyInPlace(tmp);
 
                 AreaRect wbArea = GetPixelsFromArea(tmp, 0, 0, 10, 10);
-                int tilt = (80 - wbArea.Pixels[0]);
+                int tilt = (100 - wbArea.Pixels[0]);
                 //   double tilt = (wbArea.Pixels[0] / 100 );
 
-
-
-
+                Color t = BwArea(tmp, 0, 0, 5);
+                tmp = ColorBalance(tmp, t.B, t.G, t.R);
                 BrightnessCorrection filter2 = new BrightnessCorrection(tilt);
              //   ContrastCorrection filter3 = new ContrastCorrection(20);
                 //GammaCorrection filter2 = new GammaCorrection(tilt);
                 filter2.ApplyInPlace(tmp);
-               // filter.ApplyInPlace(tmp);
+                // filter.ApplyInPlace(tmp);
+
+                //   tmp = ColorBalance(tmp, 255, 255, 255);
+
+
+                
+             
 
                 //LevelsLinear filter5 = new LevelsLinear();
                 //// установить диапазоны 
@@ -311,12 +318,12 @@ namespace WebCam
                 //filter5.ApplyInPlace(tmp);
 
 
-                //  filter3.ApplyInPlace(tmp);
+
 
 
                 AreaRect leftUpArea = GetPixelsFromArea(tmp, 0, 0, 96, 4);
                 AreaRect RightUpArea = GetPixelsFromArea(tmp, 1184, 0, 96, 4);
-            
+
 
 
 
@@ -558,11 +565,17 @@ namespace WebCam
 
             }
 
-            Color[] palette = quantizer.GetPalette(1);
-            Debug.WriteLine(string.Format("Color: {0}, {1}, {2}", palette[0].R, palette[0].G, palette[0].B));
+            Color color1 = quantizer.GetPalette(1).First();
+            double hue;
+            double saturation;
+            double value;
+            ColorToHSV(color1, out hue, out saturation, out value);
+            color1 = ColorFromHSV(hue, 1, value);
+            ColorToHSV(color1, out hue, out saturation, out value);
 
+            //    Debug.WriteLine(string.Format("Color: {0}, {1}, {2}", palette[0].R, palette[0].G, palette[0].B));
 
-            return new ObjectStruct(palette.First(), rX );
+            return new ObjectStruct(color1, rX, new HSVColor(hue, saturation, value));
 
         }
 
@@ -603,6 +616,28 @@ namespace WebCam
 
 
 
+
+        private static Color BwArea(Bitmap source, int x, int y, int size)
+        {
+            int lenght = size * size;
+            int R = 0, G = 0, B = 0;
+            for (int y1 = y; y1 < y + size; y1++)
+            {
+
+                for (int x1 = x; x1 < x + size; x1++)
+                {
+                    Color color = source.GetPixel(x1, y1);
+                    R += color.R;
+                    G += color.G;
+                    B += color.B;
+                }
+
+            }
+
+            return Color.FromArgb(255, R / lenght, G / lenght, B / lenght); 
+        }
+
+
         private static AreaRect GetPixelsFromArea(Bitmap source, int x, int y, int size, int scale)
         {
             int areaWidth = (size / scale);
@@ -622,7 +657,8 @@ namespace WebCam
                         for (int x1 = x0; x1 < x0 + scale; x1++)
                         {
                             Color color = source.GetPixel(x1, y1);
-                           grayScaleSum += (int)((color.R + color.G + color.B) / 3);
+                            grayScaleSum += (int)((color.R + color.G + color.B) / 3);
+
                         }
 
                     }
@@ -656,13 +692,6 @@ namespace WebCam
         }
 
 
-      
-
-
-
-
-
-
         private static Bitmap MergeImage(Bitmap img1, Bitmap img2)
         {
             int width = img1.Width + img2.Width;
@@ -682,6 +711,110 @@ namespace WebCam
             return tmp;
 
         }
+
+
+
+        public static Color ColorFromHSV(double hue, double saturation, double value)
+        {
+            int hi = Convert.ToInt32(Math.Floor(hue / 60)) % 6;
+            double f = hue / 60 - Math.Floor(hue / 60);
+
+            value = value * 255;
+            int v = Convert.ToInt32(value);
+            int p = Convert.ToInt32(value * (1 - saturation));
+            int q = Convert.ToInt32(value * (1 - f * saturation));
+            int t = Convert.ToInt32(value * (1 - (1 - f) * saturation));
+
+            if (hi == 0)
+                return Color.FromArgb(255, v, t, p);
+            else if (hi == 1)
+                return Color.FromArgb(255, q, v, p);
+            else if (hi == 2)
+                return Color.FromArgb(255, p, v, t);
+            else if (hi == 3)
+                return Color.FromArgb(255, p, q, v);
+            else if (hi == 4)
+                return Color.FromArgb(255, t, p, v);
+            else
+                return Color.FromArgb(255, v, p, q);
+        }
+
+
+        public static void ColorToHSV(Color color, out double hue, out double saturation, out double value)
+        {
+            int max = Math.Max(color.R, Math.Max(color.G, color.B));
+            int min = Math.Min(color.R, Math.Min(color.G, color.B));
+
+            hue = color.GetHue();
+            saturation = (max == 0) ? 0 : 1d - (1d * min / max);
+            value = max / 255d;
+        }
+
+
+
+        public static Bitmap ColorBalance(this Bitmap sourceBitmap, byte blueLevel,
+                                    byte greenLevel, byte redLevel)
+        {
+            BitmapData sourceData = sourceBitmap.LockBits(new Rectangle(0, 0,
+                                        sourceBitmap.Width, sourceBitmap.Height),
+                                        ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+
+
+            byte[] pixelBuffer = new byte[sourceData.Stride * sourceData.Height];
+
+
+            Marshal.Copy(sourceData.Scan0, pixelBuffer, 0, pixelBuffer.Length);
+
+
+            sourceBitmap.UnlockBits(sourceData);
+
+
+            float blue = 0;
+            float green = 0;
+            float red = 0;
+
+
+            float blueLevelFloat = blueLevel;
+            float greenLevelFloat = greenLevel;
+            float redLevelFloat = redLevel;
+
+
+            for (int k = 0; k + 4 < pixelBuffer.Length; k += 4)
+            {
+                blue = 255.0f / blueLevelFloat * (float)pixelBuffer[k];
+                green = 255.0f / greenLevelFloat * (float)pixelBuffer[k + 1];
+                red = 255.0f / redLevelFloat * (float)pixelBuffer[k + 2];
+
+                if (blue > 255) { blue = 255; }
+                else if (blue < 0) { blue = 0; }
+
+                if (green > 255) { green = 255; }
+                else if (green < 0) { green = 0; }
+
+                if (red > 255) { red = 255; }
+                else if (red < 0) { red = 0; }
+
+                pixelBuffer[k] = (byte)blue;
+                pixelBuffer[k + 1] = (byte)green;
+                pixelBuffer[k + 2] = (byte)red;
+            }
+
+
+            Bitmap resultBitmap = new Bitmap(sourceBitmap.Width, sourceBitmap.Height);
+
+
+            BitmapData resultData = resultBitmap.LockBits(new Rectangle(0, 0,
+                                        resultBitmap.Width, resultBitmap.Height),
+                                       ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
+
+
+            Marshal.Copy(pixelBuffer, 0, resultData.Scan0, pixelBuffer.Length);
+            resultBitmap.UnlockBits(resultData);
+
+
+            return resultBitmap;
+        }
+
 
 
     }

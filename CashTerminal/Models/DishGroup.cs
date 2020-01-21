@@ -12,7 +12,7 @@ namespace CashTerminal.Models
     public class DishGroup : Iitem
     {
         public List<Dish> ListDishes { get; set; } = new List<Dish>();
-        public ObjectStruct ObjectStruct { get; set; } = new ObjectStruct(new Color(), 0);
+        public ObjectStruct ObjectStruct { get; set; } = new ObjectStruct(new Color(), 0,null);
         public string Name { get; set; }
 
      }
