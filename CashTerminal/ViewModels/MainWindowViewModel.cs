@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
 using System.Linq;
@@ -254,11 +255,12 @@ namespace CashTerminal.ViewModels
         {
             FindObjectList.Clear();
             BasketList.Clear();
-            findObject.ForEach(obj => FindObjectList.Add(obj));
+           // findObject.ForEach(obj => FindObjectList.Add(obj));
 
            
             foreach (var obj in findObject)
             {
+                Debug.WriteLine(string.Format("Color: {0}, {1}, {2}", obj.Color.R, obj.Color.G, obj.Color.B));
                 bool isObjExist = false;
                 DishData.DishGroup.ForEach(group => 
                 
@@ -294,8 +296,9 @@ namespace CashTerminal.ViewModels
 
         private bool CheckObjectStruct(ObjectStruct based, ObjectStruct current)
         {
-            int err = 11;
-            if (current.Color.R > based.Color.R - err && current.Color.R < based.Color.R + err)
+            int err = 10;
+            int errR = 21;
+            if (current.Color.R > based.Color.R - errR && current.Color.R < based.Color.R + errR)
                 if (current.Color.G > based.Color.G - err && current.Color.G < based.Color.G + err)
                     if (current.Color.B > based.Color.B - err && current.Color.B < based.Color.B + err)
                     {

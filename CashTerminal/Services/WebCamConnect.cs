@@ -1,4 +1,5 @@
-﻿using AForge.Imaging;
+﻿using AForge;
+using AForge.Imaging;
 using AForge.Imaging.ColorReduction;
 using AForge.Imaging.Filters;
 using AForge.Video.DirectShow;
@@ -22,9 +23,9 @@ namespace WebCam
     public class AreaRect
     {
         public byte[] Pixels { get; set; }
-        public Point AbsolutePos { get; set; }
+        public System.Windows.Point AbsolutePos { get; set; }
 
-        public AreaRect(byte[] pixels, Point absolutePos)
+        public AreaRect(byte[] pixels, System.Windows.Point absolutePos)
         {
             this.Pixels = pixels;
             this.AbsolutePos = absolutePos;
@@ -276,9 +277,9 @@ namespace WebCam
             //// ContrastCorrection filter2 = new ContrastCorrection(int.MaxValue);
             //BrightnessCorrection filter2 = new BrightnessCorrection(-50);
             //// process image
-            GammaCorrection filter = new GammaCorrection(0.5);
+            GammaCorrection filter = new GammaCorrection(0.8);
             // apply the filter
-
+            
 
 
 
@@ -286,17 +287,44 @@ namespace WebCam
             if (countframe >= framerate)
             {
                 Bitmap tmp = (Bitmap)eventArgs.Frame;
-                filter.ApplyInPlace(tmp);
+                //   filter.ApplyInPlace(tmp);
 
-                //filter2.ApplyInPlace(tmp);
+                AreaRect wbArea = GetPixelsFromArea(tmp, 0, 0, 10, 10);
+                int tilt = (80 - wbArea.Pixels[0]);
+                //   double tilt = (wbArea.Pixels[0] / 100 );
+
+
+
+
+                BrightnessCorrection filter2 = new BrightnessCorrection(tilt);
+             //   ContrastCorrection filter3 = new ContrastCorrection(20);
+                //GammaCorrection filter2 = new GammaCorrection(tilt);
+                filter2.ApplyInPlace(tmp);
+               // filter.ApplyInPlace(tmp);
+
+                //LevelsLinear filter5 = new LevelsLinear();
+                //// установить диапазоны 
+                //filter5.InRed = new IntRange(10, 130);
+                //filter5.InGreen = new IntRange(0, 240);
+                //filter5.InBlue = new IntRange(0, 210);
+                //// применяем фильтр 
+                //filter5.ApplyInPlace(tmp);
+
+
+                //  filter3.ApplyInPlace(tmp);
 
 
                 AreaRect leftUpArea = GetPixelsFromArea(tmp, 0, 0, 96, 4);
                 AreaRect RightUpArea = GetPixelsFromArea(tmp, 1184, 0, 96, 4);
+            
+
+
+
                 upArea = new AreaRectGroup(leftUpArea, RightUpArea);
                 if (IsConfigurationMode)
                 {
                     context.Post(PostImageConfig, MergeImage(GetBitmapFrom(leftUpArea), GetBitmapFrom(RightUpArea)));
+
                 }
                 else
                 {
@@ -428,7 +456,7 @@ namespace WebCam
 
             Grayscale filter = new Grayscale(0.2125, 0.7154, 0.0721);
             image = filter.Apply(o as Bitmap);
-            Threshold filterGray = new Threshold(120);
+            Threshold filterGray = new Threshold(80);
             filterGray.ApplyInPlace(image);
 
 
@@ -501,7 +529,7 @@ namespace WebCam
             }
 
             Color[] palette = quantizer.GetPalette(1);
-            Debug.WriteLine(string.Format("Color: {0}, {1}, {2}", palette[0].R, palette[0].G, palette[0].B));
+           
             return result;
 
         }
@@ -521,7 +549,7 @@ namespace WebCam
                 {
                     Color color = source.GetPixel(blob.Rectangle.Location.X + x, blob.Rectangle.Location.Y + y);
 
-                    if (x > rX - 15 && x < rX + 15 && y > rY-15 && y < rY + 15)
+                    if (x > rX - 40 && x < rX + 40 && y > rY-40 && y < rY + 40)
                     {
                         quantizer.AddColor(color);
                     }
@@ -603,7 +631,7 @@ namespace WebCam
 
                 }
             }
-            return new AreaRect(pixels, new Point(x,y));
+            return new AreaRect(pixels, new System.Windows.Point(x,y));
         }
 
         private static Bitmap GetBitmapFrom(AreaRect source)
