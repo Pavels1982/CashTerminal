@@ -92,7 +92,7 @@ namespace WebCam
 
         private static event NewObject_Event newObject;
 
-        public delegate void NewObject_Event(List<Color> image);
+        public delegate void NewObject_Event(List<ObjectStruct> image);
 
         public static event NewObject_Event NewObject
         {
@@ -163,9 +163,11 @@ namespace WebCam
        
                     videoCaptureDevice.Source = value.Moniker;
                     videoCaptureDevice.VideoResolution = videoCaptureDevice.VideoCapabilities[18];
-             
-                    videoCaptureDevice.SetCameraProperty(CameraControlProperty.Exposure, 1, AForge.Video.DirectShow.CameraControlFlags.Manual);
- 
+
+                    videoCaptureDevice.SetCameraProperty(CameraControlProperty.Exposure, 4, AForge.Video.DirectShow.CameraControlFlags.Manual);
+                   // videoCaptureDevice.SetCameraProperty(CameraControlProperty.Focus, 8, AForge.Video.DirectShow.CameraControlFlags.Manual);
+                    //videoCaptureDevice.SetCameraProperty(CameraControlProperty.Iris, 16, AForge.Video.DirectShow.CameraControlFlags.Manual);
+
                 }
 
                 currentDevice = value;
@@ -235,14 +237,14 @@ namespace WebCam
             if (ElapsedSec == 2 && CurrentFrame != null)
             {
 
-                if (CheckEqualsImage(new Bitmap(CurrentFrame as Bitmap, new Size(32, 24)), StoreImage))
-                {
+                //if (CheckEqualsImage(new Bitmap((CurrentFrame as Bitmap), new Size(32, 24)), StoreImage))
+                //{
                     Debug.WriteLine(string.Format("--"));
                     GetDominantColor(CurrentFrame);
-                }
+                //}
 
 
-               
+
             }
 
             ElapsedSec++;
@@ -252,6 +254,7 @@ namespace WebCam
         {
 
             videoCaptureDevice.NewFrame -= VideoCaptureDevice_NewFrame;
+            videoCaptureDevice.SetCameraProperty(CameraControlProperty.Exposure, 0, AForge.Video.DirectShow.CameraControlFlags.Auto);
 
             try
             {
@@ -269,19 +272,24 @@ namespace WebCam
         private static void VideoCaptureDevice_NewFrame(object sender, AForge.Video.NewFrameEventArgs eventArgs)
         {
 
-            //HistogramEqualization filter = new HistogramEqualization();
+            //  HistogramEqualization filter = new HistogramEqualization();
             //// ContrastCorrection filter2 = new ContrastCorrection(int.MaxValue);
             //BrightnessCorrection filter2 = new BrightnessCorrection(-50);
             //// process image
+            GammaCorrection filter = new GammaCorrection(0.5);
+            // apply the filter
+
+
 
 
 
             if (countframe >= framerate)
             {
                 Bitmap tmp = (Bitmap)eventArgs.Frame;
-                //filter.ApplyInPlace(tmp);
+                filter.ApplyInPlace(tmp);
+
                 //filter2.ApplyInPlace(tmp);
-               
+
 
                 AreaRect leftUpArea = GetPixelsFromArea(tmp, 0, 0, 96, 4);
                 AreaRect RightUpArea = GetPixelsFromArea(tmp, 1184, 0, 96, 4);
@@ -366,7 +374,7 @@ namespace WebCam
 
                     }
                     int per = (int)(((double)coincInArea / lenghtArea) * 100);
-                    if (per > 80) { coincidences++; continue; }
+                    if (per > 70) { coincidences++; continue; }
 
                     coincInArea = 0;
                 }
@@ -420,7 +428,7 @@ namespace WebCam
 
             Grayscale filter = new Grayscale(0.2125, 0.7154, 0.0721);
             image = filter.Apply(o as Bitmap);
-            Threshold filterGray = new Threshold(130);
+            Threshold filterGray = new Threshold(120);
             filterGray.ApplyInPlace(image);
 
 
@@ -433,7 +441,7 @@ namespace WebCam
             bc.ProcessImage(image);
             Blob[] blobs = bc.GetObjectsInformation();
             newObjectImage(GetBitmapImagesFromBlobs((o as Bitmap), bc.GetObjectsInformation()));
-            newObject(GetColorsListFromBlobs((o as Bitmap), bc.GetObjectsInformation()));
+            newObject(GetObjectListFromBlobs((o as Bitmap), bc.GetObjectsInformation()));
 
             BitmapImage btm = new BitmapImage();
             using (MemoryStream memStream2 = new MemoryStream())
@@ -452,10 +460,10 @@ namespace WebCam
         }
 
 
-        private static List<Color> GetColorsListFromBlobs(Bitmap source, Blob[] blobs)
+        private static List<ObjectStruct> GetObjectListFromBlobs(Bitmap source, Blob[] blobs)
         {
 
-            List<Color> ImgList = new List<Color>();
+            List<ObjectStruct> ImgList = new List<ObjectStruct>();
 
             foreach (Blob blob in blobs)
             {
@@ -499,12 +507,11 @@ namespace WebCam
         }
 
 
-        private static Color GetDominantColorFromBlob(Bitmap source, Blob blob)
+        private static ObjectStruct GetDominantColorFromBlob(Bitmap source, Blob blob)
         {
             int rX = blob.Rectangle.Width / 2;
             int rY = blob.Rectangle.Height / 2;
 
-            Bitmap result = new Bitmap(blob.Rectangle.Width, blob.Rectangle.Height);
             IColorQuantizer quantizer = new MedianCutQuantizer();
 
             for (int x = 0; x < blob.Rectangle.Width - 1; x++)
@@ -514,7 +521,7 @@ namespace WebCam
                 {
                     Color color = source.GetPixel(blob.Rectangle.Location.X + x, blob.Rectangle.Location.Y + y);
 
-                    if (x > rX - 10 && x < rX + 10 && y > rY-10 && y < rY +10)
+                    if (x > rX - 15 && x < rX + 15 && y > rY-15 && y < rY + 15)
                     {
                         quantizer.AddColor(color);
                     }
@@ -525,7 +532,9 @@ namespace WebCam
 
             Color[] palette = quantizer.GetPalette(1);
             Debug.WriteLine(string.Format("Color: {0}, {1}, {2}", palette[0].R, palette[0].G, palette[0].B));
-            return palette.First();
+
+
+            return new ObjectStruct(palette.First(), rX );
 
         }
 

@@ -24,7 +24,7 @@ namespace CashTerminal.ViewModels
         public event PropertyChangedEventHandler PropertyChanged;
 
         public ObservableCollection<Iitem> ItemList { get; set; } = new ObservableCollection<Iitem>();
-        private List<Color> ObjectColorList { get; set; } = new List<Color>();
+        private List<ObjectStruct> FindObjectList { get; set; } = new List<ObjectStruct>();
 
 
         private ObservableCollection<Dish> basketList = new ObservableCollection<Dish>();
@@ -128,9 +128,9 @@ namespace CashTerminal.ViewModels
                 {
                     foreach (Dish dish in group.ListDishes)
                     {
-                        if (dish.Color == removableObject.Color)
+                        if (dish.Name == removableObject.Name)
                         {
-                            dish.Color = new Color();
+                            dish.ObjectStruct = new ObjectStruct(new Color(), 0);
                         }
                     }
                 });
@@ -214,15 +214,15 @@ namespace CashTerminal.ViewModels
             {
                 try
                 {
-                    Color Color = ObjectColorList[SelectedBasketItem.Index - 1];
-                    Color newColor = Color.FromArgb(Color.R, Color.G, Color.B);
+                    ObjectStruct currentObj = FindObjectList[SelectedBasketItem.Index - 1];
+       
                     DishData.DishGroup.ForEach(group =>
                     {
                         foreach (Dish dish in group.ListDishes)
                         {
                             if (dish.Name == clone.Name)
                             {
-                                dish.Color = newColor;
+                                dish.ObjectStruct = currentObj;
                             }
                         }
                     });
@@ -250,40 +250,60 @@ namespace CashTerminal.ViewModels
             WebCamConnect.NewObject += WebCamConnect_NewObject;
         }
 
-        private void WebCamConnect_NewObject(List<System.Drawing.Color> colors)
+        private void WebCamConnect_NewObject(List<ObjectStruct> findObject)
         {
-            ObjectColorList.Clear();
-            colors.ForEach(col => ObjectColorList.Add(col));
-            foreach (var color in colors)
+            FindObjectList.Clear();
+            BasketList.Clear();
+            findObject.ForEach(obj => FindObjectList.Add(obj));
+
+           
+            foreach (var obj in findObject)
             {
+                bool isObjExist = false;
                 DishData.DishGroup.ForEach(group => 
                 
                 {
                     foreach (var dish in group.ListDishes)
                     {
-                        if (CheckColor(color, dish.Color))
+                        if (CheckObjectStruct(dish.ObjectStruct, obj))
                         {
                              AddToBasket(dish, false);
+                            isObjExist = true;
+                            FindObjectList.Insert(0,obj);
                         }
 
                     }
 
 
+
                 });
+                if (!isObjExist) FindObjectList.Add(obj);
 
             }
 
            }
 
-        private bool CheckColor(Color color1, Color color2)
+        //private bool CheckColor(Color color1, Color color2)
+        //{
+        //    int err = 11;
+        //    if (color1.R > color2.R - err && color1.R < color2.R + err)
+        //        if (color1.G > color2.G - err && color1.G < color2.G + err)
+        //            if (color1.B > color2.B - err && color1.B < color2.B + err) return true;
+        //    return false;
+        //}
+
+        private bool CheckObjectStruct(ObjectStruct based, ObjectStruct current)
         {
-            int err = 7;
-            if (color1.R > color2.R - err && color1.R < color2.R + err)
-                if (color1.G > color2.G - err && color1.G < color2.G + err)
-                    if (color1.B > color2.B - err && color1.B < color2.B + err) return true;
+            int err = 11;
+            if (current.Color.R > based.Color.R - err && current.Color.R < based.Color.R + err)
+                if (current.Color.G > based.Color.G - err && current.Color.G < based.Color.G + err)
+                    if (current.Color.B > based.Color.B - err && current.Color.B < based.Color.B + err)
+                    {
+                        if (current.Radius > based.Radius - 10 && current.Radius < based.Radius + 10) return true;
+                    }
+
             return false;
         }
-
 
 
 

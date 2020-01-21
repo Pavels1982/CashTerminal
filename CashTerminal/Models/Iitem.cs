@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CashTerminal.Models;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
@@ -11,6 +12,6 @@ namespace CashTerminal.Services
     public interface Iitem
     {
          string Name { get; set; }
-         Color Color { get; set; }
+         ObjectStruct ObjectStruct { get; set; }
     }
 }

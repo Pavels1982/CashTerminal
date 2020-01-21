@@ -170,7 +170,7 @@ namespace CashTerminal.ViewModels
 
         private bool CheckColor(Color color1, Color color2)
         {
-            int err = 11;
+            int err = 51;
             if (color1.R > color2.R - err && color1.R < color2.R + err)
                 if (color1.G > color2.G - err && color1.R < color2.G + err)
                     if (color1.B > color2.B - err && color1.B < color2.B + err) return true;

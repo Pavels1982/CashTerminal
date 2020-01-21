@@ -14,6 +14,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using WebCam;
 
 namespace CashTerminal
 {
@@ -41,6 +42,11 @@ namespace CashTerminal
         private void DataGrid_ColumnDisplayIndexChanged(object sender, DataGridColumnEventArgs e)
         {
 
+        }
+
+        private void Window_Closed(object sender, EventArgs e)
+        {
+            WebCamConnect.Stop();
         }
     }
 }
