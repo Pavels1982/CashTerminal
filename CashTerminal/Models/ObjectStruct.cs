@@ -30,24 +30,7 @@ namespace CashTerminal.Models
 
     public class ObjectStruct
     {
-        public Color Color { get; set; }
-        public int Radius { get; set; }
-        public HSVColor HSVColor { get;set;}
-
-
-        public ObjectStruct(Color color, int radius, HSVColor hsvcolor) 
-        {
-            this.Color = color;
-            this.Radius = radius;
-            if (hsvcolor != null)
-            {
-                this.HSVColor = hsvcolor;
-            }
-            else
-            {
-                this.HSVColor = new HSVColor();
-            }
-
-        }
+        public int Radius { get; set; } = 0;
+        public int[] Tone { get; set; }
     }
 }

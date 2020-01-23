@@ -131,7 +131,7 @@ namespace CashTerminal.ViewModels
                     {
                         if (dish.Name == removableObject.Name)
                         {
-                            dish.ObjectStruct = new ObjectStruct(new Color(), 0,null);
+                            dish.ObjectStruct = new ObjectStruct();
                         }
                     }
                 });
@@ -260,9 +260,14 @@ namespace CashTerminal.ViewModels
            
             foreach (var obj in findObject)
             {
-                Debug.WriteLine(string.Format("ColorRGB: {0}, {1}, {2}", obj.Color.R, obj.Color.G, obj.Color.B));
-                Debug.WriteLine(string.Format("ColorHSV: {0}, {1}, {2}", obj.HSVColor.Hue, obj.HSVColor.Saturation, obj.HSVColor.Value));
-                Debug.WriteLine("--");
+                Debug.WriteLine("Tone: ");
+                foreach (int tone in obj.Tone)
+                {
+                    Debug.Write(string.Format("{0},", tone));
+                }
+               
+                //Debug.WriteLine(string.Format("ColorHSV: {0}, {1}, {2}", obj.HSVColor.Hue, obj.HSVColor.Saturation, obj.HSVColor.Value));
+               
                 bool isObjExist = false;
                 DishData.DishGroup.ForEach(group => 
                 
@@ -271,7 +276,8 @@ namespace CashTerminal.ViewModels
                     {
                         if (CheckObjectStruct(dish.ObjectStruct, obj))
                         {
-                             AddToBasket(dish, false);
+
+                            AddToBasket(dish, false);
                             isObjExist = true;
                             FindObjectList.Insert(0,obj);
                         }
@@ -281,6 +287,7 @@ namespace CashTerminal.ViewModels
 
 
                 });
+                Debug.WriteLine("--");
                 if (!isObjExist) FindObjectList.Add(obj);
 
             }
@@ -305,11 +312,28 @@ namespace CashTerminal.ViewModels
 
         private bool CheckObjectStruct(ObjectStruct based, ObjectStruct current)
         {
-            int err = 10;
-            if (current.HSVColor.Hue > based.HSVColor.Hue - err && current.HSVColor.Hue < based.HSVColor.Hue + err)
-                  if (current.Radius > based.Radius - 10 && current.Radius < based.Radius + 10) return true;
-        
+            if (current.Tone != null && based.Tone != null)
+            {
 
+                int err = 10;
+                int index = 0;
+                int considence = 0;
+                foreach (var tone in current.Tone)
+                {
+                    if (based.Tone.Length == current.Tone.Length)
+                    {
+                        if (tone >= based.Tone[index] - err && tone <= based.Tone[index] + err) considence++;
+                        index++;
+                    }
+                    
+                }
+              //  Debug.Write(string.Format("{0}%", considence));
+
+                int per = (int)(((double)considence / based.Tone.Length) * 100);
+                Debug.Write(string.Format("{0}%, ", per));
+                if (per >= 90)
+                    if (current.Radius > based.Radius - 10 && current.Radius < based.Radius + 10) return true;
+            }
             return false;
         }
 

@@ -320,7 +320,7 @@ namespace WebCam
                 AreaRect wbArea = GetPixelsFromArea(tmp, 0, 0, 5, 5);
                 int tilt = (130 - wbArea.Pixels[0]);
                 BrightnessCorrection filter2 = new BrightnessCorrection(tilt);
-              //  filter2.ApplyInPlace(tmp);
+               // filter2.ApplyInPlace(tmp);
 
                 //   double tilt = (wbArea.Pixels[0] / 100 );
 
@@ -425,7 +425,7 @@ namespace WebCam
 
                     }
                     int per = (int)(((double)coincInArea / lenghtArea) * 100);
-                    if (per > 70) { coincidences++; continue; }
+                    if (per > 60) { coincidences++; continue; }
 
                     coincInArea = 0;
                 }
@@ -485,7 +485,7 @@ namespace WebCam
             //Invert filterInvert = new Invert();
             //filterInvert.Apply(image);
 
-            Threshold filterGray = new Threshold(180);
+            Threshold filterGray = new Threshold(120);
             filterGray.ApplyInPlace(image);
 
             //System.Drawing.Bitmap image2 = (System.Drawing.Bitmap)(o as Bitmap).Clone();
@@ -497,9 +497,9 @@ namespace WebCam
 
             BlobCounterBase bc = new BlobCounter();
             bc.FilterBlobs = true;
-            bc.MinWidth = 150;
-            bc.MinHeight = 150;
-            bc.MaxHeight = 350;
+            bc.MinWidth = 80;
+            bc.MinHeight = 80;
+            bc.MaxHeight = 380;
              bc.ObjectsOrder = ObjectsOrder.Size;
             bc.ProcessImage(image);
             Blob[] blobs = bc.GetObjectsInformation();
@@ -527,6 +527,19 @@ namespace WebCam
         {
 
             List<ObjectStruct> ImgList = new List<ObjectStruct>();
+
+            //AreaRect wbArea = GetPixelsFromArea(source, 0, 0, 5, 5);
+            //int tilt = (120 - wbArea.Pixels[0]);
+            //BrightnessCorrection filter2 = new BrightnessCorrection(tilt);
+            //filter2.ApplyInPlace(source);
+
+
+
+
+            Color t = BwArea(source, 0, 0, 5);
+            source = ColorBalance(source as Bitmap, t.B, t.G, t.R);
+
+
 
             foreach (Blob blob in blobs)
             {
@@ -572,9 +585,13 @@ namespace WebCam
 
         private static ObjectStruct GetDominantColorFromBlob(Bitmap source, Blob blob)
         {
+
             int rX = blob.Rectangle.Width / 2;
             int rY = blob.Rectangle.Height / 2;
-            int r = blob.Rectangle.Width > 200? 40: 5;
+           // int r = blob.Rectangle.Width > 200 ? 40 : 2;
+            int r = blob.Rectangle.Width / 5;
+
+
 
             IColorQuantizer quantizer = new MedianCutQuantizer();
 
@@ -593,20 +610,39 @@ namespace WebCam
                 }
 
             }
+         //   int paletteLenght = blob.Rectangle.Width > 200 ? 24 : 24;
+            int paletteLenght = 24;
 
-            Color color1 = quantizer.GetPalette(1).First();
+            Color[] color1 = quantizer.GetPalette(paletteLenght);
+            ObjectStruct obj = new ObjectStruct();
+            int lenght = color1.Length;
+            obj.Tone = new int[lenght];
+            int index = 0;
+            foreach (Color color in color1)
+            {
+                double hue;
+                double saturation;
+                double value;
+                ColorToHSV(color, out hue, out saturation, out value);
+                Color alignedСolor = ColorFromHSV(hue, 1, 1);
+                obj.Tone[index] = (int)hue;
+                //if (blob.Rectangle.Width < 200 && index > 1)
+                //{
+                //    obj.Tone[index] = 0;
+                //}
+                //else
+                //{
+                //    obj.Tone[index] = (int)hue;
+                //}
+                index++;
+            }
+            //ColorToHSV(color1, out hue, out saturation, out value);
+            //color1 = ColorFromHSV(hue, 1, 1);
+            //ColorToHSV(color1, out hue, out saturation, out value);
+            //hue = (double)((double)(48f / 100f) * (double)(hue / 3.6f));
+            ////    Debug.WriteLine(string.Format("Color: {0}, {1}, {2}", palette[0].R, palette[0].G, palette[0].B));
 
-
-            double hue;
-            double saturation;
-            double value;
-            ColorToHSV(color1, out hue, out saturation, out value);
-            color1 = ColorFromHSV(hue, 1, 1);
-            ColorToHSV(color1, out hue, out saturation, out value);
-            hue = (double)((double)(48f / 100f) * (double)(hue / 3.6f));
-            //    Debug.WriteLine(string.Format("Color: {0}, {1}, {2}", palette[0].R, palette[0].G, palette[0].B));
-
-            return new ObjectStruct(color1, rX, new HSVColor(hue, saturation, value));
+            return obj;
 
         }
 
