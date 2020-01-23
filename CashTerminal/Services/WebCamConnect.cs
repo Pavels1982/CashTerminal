@@ -242,8 +242,15 @@ namespace WebCam
 
                 //if (CheckEqualsImage(new Bitmap((CurrentFrame as Bitmap), new Size(32, 24)), StoreImage))
                 //{
-                    Debug.WriteLine(string.Format("--"));
-                    GetDominantColor(CurrentFrame);
+                 Debug.WriteLine(string.Format("--"));
+                // Color t = GetBwColor(CurrentFrame as Bitmap);
+                // CurrentFrame = ColorBalance(CurrentFrame as Bitmap, t.B, t.G, t.R);
+
+                //Color t = BwArea(CurrentFrame as Bitmap, 0, 0, 5);
+                ////Color t = GetBwColor(CurrentFrame as Bitmap);
+                //CurrentFrame = ColorBalance(CurrentFrame as Bitmap, t.B, t.G, t.R);
+
+                GetDominantColor(CurrentFrame);
                 //}
 
 
@@ -271,6 +278,25 @@ namespace WebCam
         }
 
 
+        private static Color GetBwColor(Bitmap source)
+        {
+            byte R = 0;
+            byte G = 0;
+            byte B = 0;
+            for (int x = 0; x < source.Width; x++)
+            {
+                for (int y = 0; y < source.Height; y++)
+                {
+                    Color c1 = source.GetPixel(x, y);
+                    if (c1.R > R) R = c1.R;
+                    if (c1.G > G) G = c1.G;
+                    if (c1.B > B) B = c1.B;
+                }
+            }
+
+            return Color.FromArgb(255, R, G, B);
+        }
+
 
         private static void VideoCaptureDevice_NewFrame(object sender, AForge.Video.NewFrameEventArgs eventArgs)
         {
@@ -279,7 +305,7 @@ namespace WebCam
             //// ContrastCorrection filter2 = new ContrastCorrection(int.MaxValue);
             //BrightnessCorrection filter2 = new BrightnessCorrection(-50);
             //// process image
-            GammaCorrection filter = new GammaCorrection(0.8);
+           // GammaCorrection filter = new GammaCorrection(0.8);
             // apply the filter
             
 
@@ -291,40 +317,24 @@ namespace WebCam
                 Bitmap tmp = (Bitmap)eventArgs.Frame;
                 //   filter.ApplyInPlace(tmp);
 
-                AreaRect wbArea = GetPixelsFromArea(tmp, 0, 0, 10, 10);
-                int tilt = (100 - wbArea.Pixels[0]);
+                AreaRect wbArea = GetPixelsFromArea(tmp, 0, 0, 5, 5);
+                int tilt = (130 - wbArea.Pixels[0]);
+                BrightnessCorrection filter2 = new BrightnessCorrection(tilt);
+              //  filter2.ApplyInPlace(tmp);
+
                 //   double tilt = (wbArea.Pixels[0] / 100 );
 
-                Color t = BwArea(tmp, 0, 0, 5);
-                tmp = ColorBalance(tmp, t.B, t.G, t.R);
-                BrightnessCorrection filter2 = new BrightnessCorrection(tilt);
-             //   ContrastCorrection filter3 = new ContrastCorrection(20);
-                //GammaCorrection filter2 = new GammaCorrection(tilt);
-                filter2.ApplyInPlace(tmp);
-                // filter.ApplyInPlace(tmp);
-
-                //   tmp = ColorBalance(tmp, 255, 255, 255);
-
-
-                
-             
-
-                //LevelsLinear filter5 = new LevelsLinear();
-                //// установить диапазоны 
-                //filter5.InRed = new IntRange(10, 130);
-                //filter5.InGreen = new IntRange(0, 240);
-                //filter5.InBlue = new IntRange(0, 210);
-                //// применяем фильтр 
-                //filter5.ApplyInPlace(tmp);
+                //Color t = BwArea(tmp, 0, 0, 5);
 
 
 
+
+                //Color t = GetBwColor(tmp);
+                //tmp = ColorBalance(tmp, t.B, t.G, t.R);
 
 
                 AreaRect leftUpArea = GetPixelsFromArea(tmp, 0, 0, 96, 4);
                 AreaRect RightUpArea = GetPixelsFromArea(tmp, 1184, 0, 96, 4);
-
-
 
 
                 upArea = new AreaRectGroup(leftUpArea, RightUpArea);
@@ -335,11 +345,17 @@ namespace WebCam
                 }
                 else
                 {
+
+                    //  Color t = BwArea(tmp, 0, 0, 10);
+                    //  tmp = ColorBalance(tmp, t.B, t.G, t.R);
+
+                    // context.Post(PostImageConfig, new Bitmap(tmp, new Size(640, 480)));
+
                     if (CheckedArea())
                     {
                         if (!IsImageRecived)
                         {
-                            
+
                             context.Post(PostImage, new Bitmap(tmp, new Size(640, 480)));
                             StoreImage = new Bitmap(tmp, new Size(32, 24));
                             IsImageRecived = true;
@@ -461,18 +477,30 @@ namespace WebCam
             System.Drawing.Bitmap image = (System.Drawing.Bitmap)(o as Bitmap).Clone();
 
 
-            Grayscale filter = new Grayscale(0.2125, 0.7154, 0.0721);
+
+
+           // Grayscale filter = new Grayscale(0.2125, 0.7154, 0.0721);
+            Grayscale filter = new Grayscale(0.2126, 0.7152, 0.0722);
             image = filter.Apply(o as Bitmap);
-            Threshold filterGray = new Threshold(80);
+            //Invert filterInvert = new Invert();
+            //filterInvert.Apply(image);
+
+            Threshold filterGray = new Threshold(180);
             filterGray.ApplyInPlace(image);
+
+            //System.Drawing.Bitmap image2 = (System.Drawing.Bitmap)(o as Bitmap).Clone();
+            //ColorImageQuantizer ciq = new ColorImageQuantizer(new MedianCutQuantizer());
+            //// ... or just reduce colors in the specified image
+            //image2 = ciq.ReduceColors(image2, 256);
+
 
 
             BlobCounterBase bc = new BlobCounter();
             bc.FilterBlobs = true;
-            bc.MinWidth = 100;
-            bc.MinHeight = 100;
+            bc.MinWidth = 150;
+            bc.MinHeight = 150;
             bc.MaxHeight = 350;
-            bc.ObjectsOrder = ObjectsOrder.Size;
+             bc.ObjectsOrder = ObjectsOrder.Size;
             bc.ProcessImage(image);
             Blob[] blobs = bc.GetObjectsInformation();
             newObjectImage(GetBitmapImagesFromBlobs((o as Bitmap), bc.GetObjectsInformation()));
@@ -546,6 +574,7 @@ namespace WebCam
         {
             int rX = blob.Rectangle.Width / 2;
             int rY = blob.Rectangle.Height / 2;
+            int r = blob.Rectangle.Width > 200? 40: 5;
 
             IColorQuantizer quantizer = new MedianCutQuantizer();
 
@@ -556,7 +585,7 @@ namespace WebCam
                 {
                     Color color = source.GetPixel(blob.Rectangle.Location.X + x, blob.Rectangle.Location.Y + y);
 
-                    if (x > rX - 40 && x < rX + 40 && y > rY-40 && y < rY + 40)
+                    if (x > rX - r && x < rX + r && y > rY - r && y < rY + r)
                     {
                         quantizer.AddColor(color);
                     }
@@ -566,13 +595,15 @@ namespace WebCam
             }
 
             Color color1 = quantizer.GetPalette(1).First();
+
+
             double hue;
             double saturation;
             double value;
             ColorToHSV(color1, out hue, out saturation, out value);
-            color1 = ColorFromHSV(hue, 1, value);
+            color1 = ColorFromHSV(hue, 1, 1);
             ColorToHSV(color1, out hue, out saturation, out value);
-
+            hue = (double)((double)(48f / 100f) * (double)(hue / 3.6f));
             //    Debug.WriteLine(string.Format("Color: {0}, {1}, {2}", palette[0].R, palette[0].G, palette[0].B));
 
             return new ObjectStruct(color1, rX, new HSVColor(hue, saturation, value));
