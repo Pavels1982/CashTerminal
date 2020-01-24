@@ -21,7 +21,6 @@ D:\CashTerminal\CashTerminal\obj\Debug\CashTerminal.Properties.Resources.resourc
 D:\CashTerminal\CashTerminal\obj\Debug\CashTerminal.csproj.GenerateResource.Cache
 D:\CashTerminal\CashTerminal\obj\Debug\CashTerminal.exe
 D:\CashTerminal\CashTerminal\obj\Debug\CashTerminal.pdb
-D:\CashTerminal\CashTerminal\obj\Debug\CashTerminal.csprojResolveAssemblyReference.cache
 D:\CashTerminal\CashTerminal\bin\Debug\x64\concrt140.dll
 D:\CashTerminal\CashTerminal\bin\Debug\x64\cvextern.dll
 D:\CashTerminal\CashTerminal\bin\Debug\x64\msvcp140.dll
@@ -55,3 +54,12 @@ D:\CashTerminal\CashTerminal\bin\Debug\AForge.Imaging.dll
 D:\CashTerminal\CashTerminal\bin\Debug\AForge.Math.dll
 D:\CashTerminal\CashTerminal\bin\Debug\AForge.Imaging.xml
 D:\CashTerminal\CashTerminal\bin\Debug\AForge.Math.xml
+D:\CashTerminal\CashTerminal\bin\Debug\Accord.dll.config
+D:\CashTerminal\CashTerminal\bin\Debug\Accord.dll
+D:\CashTerminal\CashTerminal\bin\Debug\Accord.Video.dll
+D:\CashTerminal\CashTerminal\bin\Debug\Accord.Video.Ximea.dll
+D:\CashTerminal\CashTerminal\bin\Debug\Accord.xml
+D:\CashTerminal\CashTerminal\bin\Debug\Accord.Video.xml
+D:\CashTerminal\CashTerminal\bin\Debug\Accord.Video.Ximea.xml
+D:\CashTerminal\CashTerminal\obj\Debug\CashTerminal_Content.g.cs
+D:\CashTerminal\CashTerminal\obj\Debug\CashTerminal.csprojResolveAssemblyReference.cache

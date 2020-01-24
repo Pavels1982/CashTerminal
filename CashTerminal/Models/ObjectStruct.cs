@@ -31,6 +31,6 @@ namespace CashTerminal.Models
     public class ObjectStruct
     {
         public int Radius { get; set; } = 0;
-        public int[] Tone { get; set; }
+        public Color[] Tone { get; set; }
     }
 }

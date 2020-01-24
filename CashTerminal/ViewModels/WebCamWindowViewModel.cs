@@ -1,4 +1,6 @@
-﻿using CashTerminal.Services;
+﻿using AForge.Imaging.ColorReduction;
+using CashTerminal.Models;
+using CashTerminal.Services;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -13,7 +15,7 @@ using WebCam;
 
 namespace CashTerminal.ViewModels
 {
-    public class WebCamWindowViewModel:INotifyPropertyChanged
+    public class WebCamWindowViewModel : INotifyPropertyChanged
     {
         public ObservableCollection<WebCamDevice> ListOfWebCamDevice { get; set; } = new ObservableCollection<WebCamDevice>();
 
@@ -168,16 +170,6 @@ namespace CashTerminal.ViewModels
 
 
 
-        private bool CheckColor(Color color1, Color color2)
-        {
-            int err = 51;
-            if (color1.R > color2.R - err && color1.R < color2.R + err)
-                if (color1.G > color2.G - err && color1.R < color2.G + err)
-                    if (color1.B > color2.B - err && color1.B < color2.B + err) return true;
-            return false;
-        }
-
-
         //private void WebCamConnect_NewFrame(BitmapImage image, int weightLeft, int weightRight)
         //{
         //    this.Image = image;
@@ -189,6 +181,7 @@ namespace CashTerminal.ViewModels
             this.Image = image;
 
         }
+
 
         public event PropertyChangedEventHandler PropertyChanged;
     }

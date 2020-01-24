@@ -100,6 +100,26 @@
                 <ColumnDefinition Width="0.3*"/>
                 <ColumnDefinition Width="0.2*"/>
             </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="200"/>
+            </Grid.RowDefinitions>
+
+            <ListView ItemsSource="{Binding ObjectList}" Grid.Row="1" Grid.Column="1">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Columns="5" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Vertical" VerticalAlignment="Stretch">
+                            <Image Source="{Binding}" HorizontalAlignment="Center" VerticalAlignment="Top" Width="100" Height="100"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+
 
             <!--Калькулятор-->
             <Grid

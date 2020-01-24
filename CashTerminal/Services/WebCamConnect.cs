@@ -1,4 +1,5 @@
-﻿using AForge;
+﻿using Accord.Video.Ximea;
+using AForge;
 using AForge.Imaging;
 using AForge.Imaging.ColorReduction;
 using AForge.Imaging.Filters;
@@ -167,8 +168,9 @@ namespace WebCam
                     videoCaptureDevice.Source = value.Moniker;
                     videoCaptureDevice.VideoResolution = videoCaptureDevice.VideoCapabilities[18];
 
-                    //videoCaptureDevice.SetCameraProperty(CameraControlProperty.Exposure, 4, AForge.Video.DirectShow.CameraControlFlags.Manual);
-                   // videoCaptureDevice.SetCameraProperty(CameraControlProperty.Focus, 8, AForge.Video.DirectShow.CameraControlFlags.Manual);
+
+                    // videoCaptureDevice.SetCameraProperty(CameraControlProperty.Exposure,1, AForge.Video.DirectShow.CameraControlFlags.Manual);
+                    // videoCaptureDevice.SetCameraProperty(CameraControlProperty.Focus, 8, AForge.Video.DirectShow.CameraControlFlags.Manual);
                     //videoCaptureDevice.SetCameraProperty(CameraControlProperty.Iris, 16, AForge.Video.DirectShow.CameraControlFlags.Manual);
 
                 }
@@ -200,6 +202,9 @@ namespace WebCam
         {
             if (device != null)
             {
+                //XimeaCamera camera = new XimeaCamera();
+                //camera.Open(0);
+                //camera.SetParam(CameraParameter.AutoWhiteBalance, 0);
                 CurrentDevice = device;
             }
         }
@@ -237,18 +242,20 @@ namespace WebCam
            //     Debug.WriteLine(string.Format("--"));
            //     GetDominantColor(CurrentFrame);
             }
+
+
             if (ElapsedSec == 2 && CurrentFrame != null)
             {
 
                 //if (CheckEqualsImage(new Bitmap((CurrentFrame as Bitmap), new Size(32, 24)), StoreImage))
                 //{
                  Debug.WriteLine(string.Format("--"));
-                // Color t = GetBwColor(CurrentFrame as Bitmap);
-                // CurrentFrame = ColorBalance(CurrentFrame as Bitmap, t.B, t.G, t.R);
+            // Color t = GetBwColor(CurrentFrame as Bitmap);
+            // CurrentFrame = ColorBalance(CurrentFrame as Bitmap, t.B, t.G, t.R);
 
-                //Color t = BwArea(CurrentFrame as Bitmap, 0, 0, 5);
-                ////Color t = GetBwColor(CurrentFrame as Bitmap);
-                //CurrentFrame = ColorBalance(CurrentFrame as Bitmap, t.B, t.G, t.R);
+            //Color t = BwArea(CurrentFrame as Bitmap, 0, 0, 5);
+            ////Color t = GetBwColor(CurrentFrame as Bitmap);
+            //CurrentFrame = ColorBalance(CurrentFrame as Bitmap, t.B, t.G, t.R);
 
                 GetDominantColor(CurrentFrame);
                 //}
@@ -283,11 +290,13 @@ namespace WebCam
             byte R = 0;
             byte G = 0;
             byte B = 0;
+            // Color result = Color.FromArgb(255, 0, 0, 0); ;
             for (int x = 0; x < source.Width; x++)
             {
                 for (int y = 0; y < source.Height; y++)
                 {
                     Color c1 = source.GetPixel(x, y);
+                    // if (c1.R + c1.G + c1.B > result.R + result.G + result.B) result = Color.FromArgb(255, c1.R, c1.G, c1.B);
                     if (c1.R > R) R = c1.R;
                     if (c1.G > G) G = c1.G;
                     if (c1.B > B) B = c1.B;
@@ -295,6 +304,8 @@ namespace WebCam
             }
 
             return Color.FromArgb(255, R, G, B);
+            //return result;
+
         }
 
 
@@ -317,9 +328,9 @@ namespace WebCam
                 Bitmap tmp = (Bitmap)eventArgs.Frame;
                 //   filter.ApplyInPlace(tmp);
 
-                AreaRect wbArea = GetPixelsFromArea(tmp, 0, 0, 5, 5);
-                int tilt = (130 - wbArea.Pixels[0]);
-                BrightnessCorrection filter2 = new BrightnessCorrection(tilt);
+                //AreaRect wbArea = GetPixelsFromArea(tmp, 0, 0, 5, 5);
+                //int tilt = (130 - wbArea.Pixels[0]);
+                //BrightnessCorrection filter2 = new BrightnessCorrection(tilt);
                // filter2.ApplyInPlace(tmp);
 
                 //   double tilt = (wbArea.Pixels[0] / 100 );
@@ -346,10 +357,25 @@ namespace WebCam
                 else
                 {
 
-                    //  Color t = BwArea(tmp, 0, 0, 10);
-                    //  tmp = ColorBalance(tmp, t.B, t.G, t.R);
 
-                    // context.Post(PostImageConfig, new Bitmap(tmp, new Size(640, 480)));
+
+                    //YCbCrLinear filter = new YCbCrLinear();
+                    //filter.InCb = new AForge.Range(-0.276f, 0.163f);
+                    //filter.InCr = new AForge.Range(-0.202f, 0.500f);
+                    //filter.ApplyInPlace(tmp);
+
+                    //AreaRect wbArea = GetPixelsFromArea(tmp, 0, 0, 5, 5);
+                    //int tilt = (100 - wbArea.Pixels[0]);
+                    //BrightnessCorrection filter2 = new BrightnessCorrection(tilt);
+                    //filter2.ApplyInPlace(tmp);
+
+                    //Color t = BwArea(tmp, 0, 0, 10);
+                    //tmp = ColorBalance(tmp, t.B, t.G, t.R);
+
+
+
+
+                    //context.Post(PostImageConfig, new Bitmap(tmp, new Size(640, 480)));
 
                     if (CheckedArea())
                     {
@@ -479,8 +505,8 @@ namespace WebCam
 
 
 
-           // Grayscale filter = new Grayscale(0.2125, 0.7154, 0.0721);
-            Grayscale filter = new Grayscale(0.2126, 0.7152, 0.0722);
+            Grayscale filter = new Grayscale(0.2125, 0.7154, 0.0721);
+          //  Grayscale filter = new Grayscale(0.2126, 0.7152, 0.0722);
             image = filter.Apply(o as Bitmap);
             //Invert filterInvert = new Invert();
             //filterInvert.Apply(image);
@@ -528,18 +554,24 @@ namespace WebCam
 
             List<ObjectStruct> ImgList = new List<ObjectStruct>();
 
-            //AreaRect wbArea = GetPixelsFromArea(source, 0, 0, 5, 5);
-            //int tilt = (120 - wbArea.Pixels[0]);
-            //BrightnessCorrection filter2 = new BrightnessCorrection(tilt);
-            //filter2.ApplyInPlace(source);
 
 
-
-
-            Color t = BwArea(source, 0, 0, 5);
+            Color t = BwArea(source, 0, 0, 10);
             source = ColorBalance(source as Bitmap, t.B, t.G, t.R);
 
+            //SaturationCorrection filter = new SaturationCorrection(0.2f);
+            //filter.ApplyInPlace(source);
 
+
+
+            //Color t = GetBwColor(source);
+            //source = ColorBalance(source, t.B, t.G, t.R);
+
+
+            //AreaRect wbArea = GetPixelsFromArea(source, 0, 0, 5, 5);
+            //int tilt = (180 - wbArea.Pixels[0]);
+            //BrightnessCorrection filter2 = new BrightnessCorrection(tilt);
+            //filter2.ApplyInPlace(source);
 
             foreach (Blob blob in blobs)
             {
@@ -589,11 +621,11 @@ namespace WebCam
             int rX = blob.Rectangle.Width / 2;
             int rY = blob.Rectangle.Height / 2;
            // int r = blob.Rectangle.Width > 200 ? 40 : 2;
-            int r = blob.Rectangle.Width / 5;
+            int r = blob.Rectangle.Width / 4;
 
 
 
-            IColorQuantizer quantizer = new MedianCutQuantizer();
+             IColorQuantizer quantizer = new MedianCutQuantizer();
 
             for (int x = 0; x < blob.Rectangle.Width - 1; x++)
             {
@@ -604,36 +636,35 @@ namespace WebCam
 
                     if (x > rX - r && x < rX + r && y > rY - r && y < rY + r)
                     {
-                        quantizer.AddColor(color);
+                        double hue;
+                        double saturation;
+                        double value;
+                        ColorToHSV(color, out hue, out saturation, out value);
+                        Color alignedСolor = ColorFromHSV(hue, saturation, 0.8);
+
+                        quantizer.AddColor(alignedСolor);
                     }
 
                 }
 
             }
-         //   int paletteLenght = blob.Rectangle.Width > 200 ? 24 : 24;
-            int paletteLenght = 24;
+         //   int paletteLenght = blob.Rectangle.Width > 200 ? 24 : 24; 36 64
+            int paletteLenght = 128;
 
             Color[] color1 = quantizer.GetPalette(paletteLenght);
+
             ObjectStruct obj = new ObjectStruct();
-            int lenght = color1.Length;
-            obj.Tone = new int[lenght];
+            int lenght = paletteLenght;
+            obj.Tone = new Color[lenght];
             int index = 0;
             foreach (Color color in color1)
             {
-                double hue;
-                double saturation;
-                double value;
-                ColorToHSV(color, out hue, out saturation, out value);
-                Color alignedСolor = ColorFromHSV(hue, 1, 1);
-                obj.Tone[index] = (int)hue;
-                //if (blob.Rectangle.Width < 200 && index > 1)
-                //{
-                //    obj.Tone[index] = 0;
-                //}
-                //else
-                //{
-                //    obj.Tone[index] = (int)hue;
-                //}
+                //double hue;
+                //double saturation;
+                //double value;
+                //ColorToHSV(color, out hue, out saturation, out value);
+                //Color alignedСolor = ColorFromHSV(hue, saturation, value);
+                obj.Tone[index] = color;
                 index++;
             }
             //ColorToHSV(color1, out hue, out saturation, out value);
@@ -641,7 +672,7 @@ namespace WebCam
             //ColorToHSV(color1, out hue, out saturation, out value);
             //hue = (double)((double)(48f / 100f) * (double)(hue / 3.6f));
             ////    Debug.WriteLine(string.Format("Color: {0}, {1}, {2}", palette[0].R, palette[0].G, palette[0].B));
-
+            obj.Radius = rX;
             return obj;
 
         }
@@ -701,7 +732,15 @@ namespace WebCam
 
             }
 
-            return Color.FromArgb(255, R / lenght, G / lenght, B / lenght); 
+
+            Color tmp = Color.FromArgb(255, R / lenght, G / lenght, B / lenght);
+            double hue;
+            double saturation;
+            double value;
+            ColorToHSV(tmp, out hue, out saturation, out value);
+            tmp = ColorFromHSV(hue, 0.1f, 0.9f);
+
+            return tmp;
         }
 
 

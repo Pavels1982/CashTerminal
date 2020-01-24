@@ -9,6 +9,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -16,6 +17,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media.Imaging;
 using WebCam;
 
 namespace CashTerminal.ViewModels
@@ -26,6 +28,8 @@ namespace CashTerminal.ViewModels
 
         public ObservableCollection<Iitem> ItemList { get; set; } = new ObservableCollection<Iitem>();
         private List<ObjectStruct> FindObjectList { get; set; } = new List<ObjectStruct>();
+
+        public ObservableCollection<BitmapImage> ObjectList { get; set; } = new ObservableCollection<BitmapImage>();
 
 
         private ObservableCollection<Dish> basketList = new ObservableCollection<Dish>();
@@ -251,20 +255,54 @@ namespace CashTerminal.ViewModels
             WebCamConnect.NewObject += WebCamConnect_NewObject;
         }
 
+
+        private BitmapImage ImageFromStruct(ObjectStruct obj)
+        {
+            int size = (int)Math.Sqrt(obj.Tone.Length);
+
+            Bitmap img = new Bitmap(size,size);
+            int index = 0;
+            for (int x = 0; x < img.Height; x++)
+            {
+                for (int y = 0; y < img.Width; y++)
+                {
+                    Color color = obj.Tone[index];
+                    img.SetPixel(x, y, color);
+                    index++;
+                }
+            }
+
+            BitmapImage btm = new BitmapImage();
+            using (MemoryStream memStream2 = new MemoryStream())
+            {
+                (img).Save(memStream2, System.Drawing.Imaging.ImageFormat.Png);
+                memStream2.Position = 0;
+                btm.BeginInit();
+                btm.CacheOption = BitmapCacheOption.OnLoad;
+                btm.UriSource = null;
+                btm.StreamSource = memStream2;
+                btm.EndInit();
+            }
+
+            return btm;
+        }
+
         private void WebCamConnect_NewObject(List<ObjectStruct> findObject)
         {
             FindObjectList.Clear();
             BasketList.Clear();
+            ObjectList.Clear();
            // findObject.ForEach(obj => FindObjectList.Add(obj));
 
-           
+
             foreach (var obj in findObject)
             {
-                Debug.WriteLine("Tone: ");
-                foreach (int tone in obj.Tone)
-                {
-                    Debug.Write(string.Format("{0},", tone));
-                }
+                ObjectList.Add(ImageFromStruct(obj));
+                //Debug.WriteLine("Tone: ");
+                //foreach (int tone in obj.Tone)
+                //{
+                //    Debug.Write(string.Format("{0},", tone));
+                //}
                
                 //Debug.WriteLine(string.Format("ColorHSV: {0}, {1}, {2}", obj.HSVColor.Hue, obj.HSVColor.Saturation, obj.HSVColor.Value));
                
@@ -315,14 +353,27 @@ namespace CashTerminal.ViewModels
             if (current.Tone != null && based.Tone != null)
             {
 
-                int err = 10;
+                double err = 0.5f;
                 int index = 0;
                 int considence = 0;
                 foreach (var tone in current.Tone)
                 {
                     if (based.Tone.Length == current.Tone.Length)
                     {
-                        if (tone >= based.Tone[index] - err && tone <= based.Tone[index] + err) considence++;
+                        double hue1;
+                        double sat1;
+                        double brt1;
+                        WebCamConnect.ColorToHSV(tone, out hue1, out sat1, out brt1);
+
+                        double hue2;
+                        double sat2;
+                        double brt2;
+                        WebCamConnect.ColorToHSV(based.Tone[index], out hue2, out sat2, out brt2);
+                        if (hue1 >= hue2 - 8 && hue1 <= hue2 + 8)
+                            if (sat1 >= sat2 - 0.2f && sat1 <= sat2 + 0.2f)
+                                if (brt1 >= brt2 - err && brt1 <= brt2 + err) considence++;
+
+                        //  if (tone >= based.Tone[index] - err && tone <= based.Tone[index] + err) considence++;
                         index++;
                     }
                     
@@ -331,7 +382,7 @@ namespace CashTerminal.ViewModels
 
                 int per = (int)(((double)considence / based.Tone.Length) * 100);
                 Debug.Write(string.Format("{0}%, ", per));
-                if (per >= 90)
+                if (per >= 50)
                     if (current.Radius > based.Radius - 10 && current.Radius < based.Radius + 10) return true;
             }
             return false;
