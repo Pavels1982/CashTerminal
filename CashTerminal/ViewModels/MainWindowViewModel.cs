@@ -369,8 +369,8 @@ namespace CashTerminal.ViewModels
                         double sat2;
                         double brt2;
                         WebCamConnect.ColorToHSV(based.Tone[index], out hue2, out sat2, out brt2);
-                        if (hue1 >= hue2 - 8 && hue1 <= hue2 + 8)
-                            if (sat1 >= sat2 - 0.2f && sat1 <= sat2 + 0.2f)
+                        if (hue1 >= hue2 - 9 && hue1 <= hue2 + 9)//8
+                            if (sat1 >= sat2 - 0.3f && sat1 <= sat2 + 0.3f)
                                 if (brt1 >= brt2 - err && brt1 <= brt2 + err) considence++;
 
                         //  if (tone >= based.Tone[index] - err && tone <= based.Tone[index] + err) considence++;
@@ -382,7 +382,7 @@ namespace CashTerminal.ViewModels
 
                 int per = (int)(((double)considence / based.Tone.Length) * 100);
                 Debug.Write(string.Format("{0}%, ", per));
-                if (per >= 50)
+                if (per >= 65)
                     if (current.Radius > based.Radius - 10 && current.Radius < based.Radius + 10) return true;
             }
             return false;

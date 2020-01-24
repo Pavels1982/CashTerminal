@@ -102,7 +102,7 @@
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>
-                <RowDefinition Height="200"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
             <ListView ItemsSource="{Binding ObjectList}" Grid.Row="1" Grid.Column="1">

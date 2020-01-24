@@ -451,7 +451,7 @@ namespace WebCam
 
                     }
                     int per = (int)(((double)coincInArea / lenghtArea) * 100);
-                    if (per > 60) { coincidences++; continue; }
+                    if (per > 50) { coincidences++; continue; }
 
                     coincInArea = 0;
                 }
@@ -640,7 +640,7 @@ namespace WebCam
                         double saturation;
                         double value;
                         ColorToHSV(color, out hue, out saturation, out value);
-                        Color alignedСolor = ColorFromHSV(hue, saturation, 0.8);
+                        Color alignedСolor = ColorFromHSV(hue, saturation, value);
 
                         quantizer.AddColor(alignedСolor);
                     }
@@ -649,7 +649,7 @@ namespace WebCam
 
             }
          //   int paletteLenght = blob.Rectangle.Width > 200 ? 24 : 24; 36 64
-            int paletteLenght = 128;
+            int paletteLenght = 256;
 
             Color[] color1 = quantizer.GetPalette(paletteLenght);
 
@@ -734,11 +734,11 @@ namespace WebCam
 
 
             Color tmp = Color.FromArgb(255, R / lenght, G / lenght, B / lenght);
-            double hue;
-            double saturation;
-            double value;
-            ColorToHSV(tmp, out hue, out saturation, out value);
-            tmp = ColorFromHSV(hue, 0.1f, 0.9f);
+            //double hue;
+            //double saturation;
+            //double value;
+            //ColorToHSV(tmp, out hue, out saturation, out value);
+            //tmp = ColorFromHSV(hue, 0.1f, 0.9f);
 
             return tmp;
         }
