@@ -64,6 +64,10 @@ namespace WebCam
 
         private static List<AreaRectGroup> AreaRectTemplates { get; set; } = new List<AreaRectGroup>();
 
+        private static List<ObjectStruct> ObjectList { get; set; } = new List<ObjectStruct>();
+        private static List<ObjectStruct> FindedObjects { get; set; } = new List<ObjectStruct>();
+
+
         public static bool IsStarted { get; set; }
 
         private static Bitmap StoreImage { get; set; }
@@ -96,7 +100,7 @@ namespace WebCam
 
         private static event NewObject_Event newObject;
 
-        public delegate void NewObject_Event(List<ObjectStruct> image);
+        public delegate void NewObject_Event(List<int?> id);
 
         public static event NewObject_Event NewObject
         {
@@ -486,15 +490,6 @@ namespace WebCam
         public static void PostImage(object o)
         {
             CurrentFrame = o;
-            //  var imginput = new Image<Bgr, byte>(o as Bitmap);
-
-            //Image<Gray, Byte> myImage = new Image<Gray, Byte>(o as Bitmap).ThresholdBinary(new Gray(150), new Gray(255));
-            //Emgu.CV.Util.VectorOfVectorOfPoint countours = new Emgu.CV.Util.VectorOfVectorOfPoint();
-            //Mat hier = new Mat();
-            //CvInvoke.FindContours(myImage, countours, hier, Emgu.CV.CvEnum.RetrType.List, Emgu.CV.CvEnum.ChainApproxMethod.ChainApproxSimple);
-            //CvInvoke.DrawContours(imginput, countours, -1, new MCvScalar(255, 0, 0, 0));
-
-
 
         }
 
@@ -502,35 +497,23 @@ namespace WebCam
         {
             System.Drawing.Bitmap image = (System.Drawing.Bitmap)(o as Bitmap).Clone();
 
-
-
-
             Grayscale filter = new Grayscale(0.2125, 0.7154, 0.0721);
-          //  Grayscale filter = new Grayscale(0.2126, 0.7152, 0.0722);
             image = filter.Apply(o as Bitmap);
-            //Invert filterInvert = new Invert();
-            //filterInvert.Apply(image);
-
             Threshold filterGray = new Threshold(120);
             filterGray.ApplyInPlace(image);
-
-            //System.Drawing.Bitmap image2 = (System.Drawing.Bitmap)(o as Bitmap).Clone();
-            //ColorImageQuantizer ciq = new ColorImageQuantizer(new MedianCutQuantizer());
-            //// ... or just reduce colors in the specified image
-            //image2 = ciq.ReduceColors(image2, 256);
-
-
 
             BlobCounterBase bc = new BlobCounter();
             bc.FilterBlobs = true;
             bc.MinWidth = 80;
             bc.MinHeight = 80;
             bc.MaxHeight = 380;
-             bc.ObjectsOrder = ObjectsOrder.Size;
+            bc.ObjectsOrder = ObjectsOrder.Size;
             bc.ProcessImage(image);
             Blob[] blobs = bc.GetObjectsInformation();
-            newObjectImage(GetBitmapImagesFromBlobs((o as Bitmap), bc.GetObjectsInformation()));
-            newObject(GetObjectListFromBlobs((o as Bitmap), bc.GetObjectsInformation()));
+            FindedObjects = GetObjectListFromBlobs((o as Bitmap), blobs);
+            newObjectImage(GetBitmapImagesFromBlobs((o as Bitmap), blobs));
+            CheckForEqualsInDataBase(FindedObjects);
+            //newObject(FindedObjects);
 
             BitmapImage btm = new BitmapImage();
             using (MemoryStream memStream2 = new MemoryStream())
@@ -547,6 +530,109 @@ namespace WebCam
             newFrame(btm);
 
         }
+
+        private static void CheckForEqualsInDataBase(List<ObjectStruct> findedObj)
+        {
+            List<int?> resultID = new List<int?>();
+
+            findedObj.ForEach(newObj =>
+            {
+
+                ObjectList.ForEach(baseObj =>
+                {
+                    //Сравнение палитры объектов
+                    if (CheckObjectPalette(baseObj, newObj))
+                    {
+                        if (baseObj.Id.Count > 1)
+                            ObjectComparison(ref baseObj, newObj);
+
+                        if (baseObj.Id.Count == 1)
+                        {
+                            resultID.Add(baseObj.Id[0]);
+                        }
+
+                    }
+
+                });
+
+            });
+
+            newObject(resultID);
+        }
+
+        public static void CheckId(List<int?> id)
+        {
+            FindedObjects.ForEach(o => o.Id.AddRange(id));
+
+            FindedObjects.ForEach(newObj =>
+            {
+
+                bool ObjExist = false;
+                ObjectList.ForEach(baseObj =>
+                {
+                    //Сравнение палитры объектов
+                    if (CheckObjectPalette(baseObj, newObj) && !ObjExist)
+                    {
+                        ObjExist = true;
+                        ObjectComparison(ref baseObj, newObj);
+
+                    }
+
+                });
+
+                if (!ObjExist) ObjectList.Add(newObj);
+
+            });
+
+
+        }
+
+        private static void ObjectComparison(ref ObjectStruct based, ObjectStruct newObject)
+        {
+            List<int?> newId = new List<int?>();
+            int? id = null;
+                foreach (var basedId in based.Id)
+                {
+                id = newObject.Id.Find(o => o == basedId);
+                if (id != null) { newId.Add(id); }
+                }
+
+            if (newId.Count > 0)
+            {
+                ObjectList.ForEach(ob => newId.ForEach(i => ob.Id.Remove(i)) );
+                based.Id = newId;
+            };
+            
+        }
+
+
+        private static bool CheckObjectPalette(ObjectStruct based, ObjectStruct current)
+        {
+            if (current.Tone != null && based.Tone != null)
+            {
+                int err = 9;
+                int index = 0;
+                int considence = 0;
+                foreach (var tone in current.Tone)
+                {
+                    if (based.Tone.Length == current.Tone.Length)
+                    {
+                        if (tone.Hue >= based.Tone[index].Hue - err && tone.Hue <= based.Tone[index].Hue + err)//8
+                            if (tone.Saturation >= based.Tone[index].Saturation - 0.3f && tone.Saturation <= based.Tone[index].Saturation + 0.3f)
+                                considence++;
+                        index++;
+                    }
+
+                }
+                int per = (int)(((double)considence / based.Tone.Length) * 100);
+                if (per >= 65)
+                    if (current.Radius > based.Radius - 10 && current.Radius < based.Radius + 10) return true;
+            }
+            return false;
+        }
+
+
+
 
 
         private static List<ObjectStruct> GetObjectListFromBlobs(Bitmap source, Blob[] blobs)
@@ -655,23 +741,17 @@ namespace WebCam
 
             ObjectStruct obj = new ObjectStruct();
             int lenght = paletteLenght;
-            obj.Tone = new Color[lenght];
+            obj.Tone = new HSVColor[lenght];
             int index = 0;
             foreach (Color color in color1)
             {
-                //double hue;
-                //double saturation;
-                //double value;
-                //ColorToHSV(color, out hue, out saturation, out value);
-                //Color alignedСolor = ColorFromHSV(hue, saturation, value);
-                obj.Tone[index] = color;
+                double hue;
+                double saturation;
+                double value;
+                ColorToHSV(color, out hue, out saturation, out value);
+                obj.Tone[index] = new HSVColor(hue, saturation,value);
                 index++;
             }
-            //ColorToHSV(color1, out hue, out saturation, out value);
-            //color1 = ColorFromHSV(hue, 1, 1);
-            //ColorToHSV(color1, out hue, out saturation, out value);
-            //hue = (double)((double)(48f / 100f) * (double)(hue / 3.6f));
-            ////    Debug.WriteLine(string.Format("Color: {0}, {1}, {2}", palette[0].R, palette[0].G, palette[0].B));
             obj.Radius = rX;
             return obj;
 

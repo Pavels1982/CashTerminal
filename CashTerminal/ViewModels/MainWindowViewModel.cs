@@ -171,6 +171,7 @@ namespace CashTerminal.ViewModels
                     else
                     {
                         MessageBox.Show("Оплата произведена!");
+                        PostData(BasketList);
                         BasketList.Clear();
                         SelectedBasketItem = null;
                         CalculateBasketPrice();
@@ -215,28 +216,15 @@ namespace CashTerminal.ViewModels
             SelectedBasketItem = clone;
             CalculateBasketPrice();
 
-            if (isNewData)
-            {
-                try
-                {
-                    ObjectStruct currentObj = FindObjectList[SelectedBasketItem.Index - 1];
-       
-                    DishData.DishGroup.ForEach(group =>
-                    {
-                        foreach (Dish dish in group.ListDishes)
-                        {
-                            if (dish.Name == clone.Name)
-                            {
-                                dish.ObjectStruct = currentObj;
-                            }
-                        }
-                    });
-
-                }
-                catch { }
-            }
-
         }
+
+        private void PostData(ObservableCollection<Dish> basketList)
+        {
+            List<int?> id = new List<int?>();
+            basketList.ToList().ForEach(dish => id.Add(dish.Id));
+            WebCamConnect.CheckId(id);
+        }
+
 
         /// <summary>
         /// Конструктор по-умолчанию.
@@ -266,7 +254,10 @@ namespace CashTerminal.ViewModels
             {
                 for (int y = 0; y < img.Width; y++)
                 {
-                    Color color = obj.Tone[index];
+                    double hue = obj.Tone[index].Hue;
+                    double sat = obj.Tone[index].Saturation;
+                    double val = obj.Tone[index].Value;
+                    Color color = WebCamConnect.ColorFromHSV(hue,sat,val);
                     img.SetPixel(x, y, color);
                     index++;
                 }
@@ -287,46 +278,19 @@ namespace CashTerminal.ViewModels
             return btm;
         }
 
-        private void WebCamConnect_NewObject(List<ObjectStruct> findObject)
+        private void WebCamConnect_NewObject(List<int?> id)
         {
             FindObjectList.Clear();
             BasketList.Clear();
-            ObjectList.Clear();
-           // findObject.ForEach(obj => FindObjectList.Add(obj));
+            // findObject.ForEach(obj => FindObjectList.Add(obj));
 
-
-            foreach (var obj in findObject)
+            foreach (int? recId in id)
             {
-                ObjectList.Add(ImageFromStruct(obj));
-                //Debug.WriteLine("Tone: ");
-                //foreach (int tone in obj.Tone)
-                //{
-                //    Debug.Write(string.Format("{0},", tone));
-                //}
-               
-                //Debug.WriteLine(string.Format("ColorHSV: {0}, {1}, {2}", obj.HSVColor.Hue, obj.HSVColor.Saturation, obj.HSVColor.Value));
-               
-                bool isObjExist = false;
-                DishData.DishGroup.ForEach(group => 
-                
+
+                foreach (var group in DishData.DishGroup)
                 {
-                    foreach (var dish in group.ListDishes)
-                    {
-                        if (CheckObjectStruct(dish.ObjectStruct, obj))
-                        {
-
-                            AddToBasket(dish, false);
-                            isObjExist = true;
-                            FindObjectList.Insert(0,obj);
-                        }
-
-                    }
-
-
-
-                });
-                Debug.WriteLine("--");
-                if (!isObjExist) FindObjectList.Add(obj);
+                    if (group.ListDishes.Any(d => d.Id == recId)) { AddToBasket(group.ListDishes.Find(d => d.Id == recId));break; }
+                }
 
             }
 
@@ -360,20 +324,9 @@ namespace CashTerminal.ViewModels
                 {
                     if (based.Tone.Length == current.Tone.Length)
                     {
-                        double hue1;
-                        double sat1;
-                        double brt1;
-                        WebCamConnect.ColorToHSV(tone, out hue1, out sat1, out brt1);
-
-                        double hue2;
-                        double sat2;
-                        double brt2;
-                        WebCamConnect.ColorToHSV(based.Tone[index], out hue2, out sat2, out brt2);
-                        if (hue1 >= hue2 - 9 && hue1 <= hue2 + 9)//8
-                            if (sat1 >= sat2 - 0.3f && sat1 <= sat2 + 0.3f)
-                                if (brt1 >= brt2 - err && brt1 <= brt2 + err) considence++;
-
-                        //  if (tone >= based.Tone[index] - err && tone <= based.Tone[index] + err) considence++;
+                        if (tone.Hue >= based.Tone[index].Hue - 9 && tone.Hue <= based.Tone[index].Hue + 9)//8
+                            if (tone.Saturation >= based.Tone[index].Saturation - 0.3f && tone.Saturation <= based.Tone[index].Saturation + 0.3f)
+                                considence++;
                         index++;
                     }
                     
