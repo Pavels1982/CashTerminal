@@ -563,23 +563,6 @@ namespace WebCam
         public static void CheckId(List<int?> id)
         {
 
-            //ObjectList.ForEach(baseObj =>
-            //{
-            //    if (baseObj.Id.Count > 1)
-            //    {
-            //        if (baseObj.Id.Any(obid => id.Any(d => obid == d) == true))
-            //        {
-            //            var b = baseObj.Id.Intersect(id);
-            //            baseObj.Id = new List<int?>();
-            //            b.ToList().ForEach(el => baseObj.Id.Add(el));
-
-            //          //  ObjectList.ForEach(ob => ob.Id.ForEach(i => ob.Id.Remove(i)));
-
-            //        }
-            //    }
-
-
-            //});
             List<int?> sortedID = new List<int?>();
             foreach (int? val in id)
             {
@@ -600,7 +583,7 @@ namespace WebCam
 
             FindedObjects.ForEach(o => o.Id.AddRange(sortedID));
 
-           
+
 
 
             FindedObjects.ForEach(newObj =>
@@ -632,32 +615,8 @@ namespace WebCam
 
                 });
 
-
-            //FindedObjects.ForEach(o => o.Id.AddRange(id));
-
-            //FindedObjects.ForEach(newObj =>
-            //{
-
-            //    bool ObjExist = false;
-            //    ObjectList.ForEach(baseObj =>
-            //    {
-
-            //        //Сравнение палитры объектов
-            //        if (CheckObjectPalette(baseObj, newObj) && !ObjExist)
-            //        {
-            //            ObjExist = true;
-            //            ObjectComparison(ref baseObj, newObj);
-
-            //        }
-
-            //    });
-
-            //    if (!ObjExist) ObjectList.Add(newObj);
-
-            //});
-
-
         }
+
 
         private static void ObjectComparison(ref ObjectStruct based, ObjectStruct newObject)
         {
