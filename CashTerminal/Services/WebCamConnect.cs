@@ -543,8 +543,8 @@ namespace WebCam
                     //Сравнение палитры объектов
                     if (CheckObjectPalette(baseObj, newObj))
                     {
-                        if (baseObj.Id.Count > 1)
-                            ObjectComparison(ref baseObj, newObj);
+                        //if (baseObj.Id.Count == 2)
+                        //    ObjectComparison(ref baseObj, newObj);
 
                         if (baseObj.Id.Count == 1)
                         {
@@ -562,27 +562,99 @@ namespace WebCam
 
         public static void CheckId(List<int?> id)
         {
-            FindedObjects.ForEach(o => o.Id.AddRange(id));
 
-            FindedObjects.ForEach(newObj =>
+            //ObjectList.ForEach(baseObj =>
+            //{
+            //    if (baseObj.Id.Count > 1)
+            //    {
+            //        if (baseObj.Id.Any(obid => id.Any(d => obid == d) == true))
+            //        {
+            //            var b = baseObj.Id.Intersect(id);
+            //            baseObj.Id = new List<int?>();
+            //            b.ToList().ForEach(el => baseObj.Id.Add(el));
+
+            //          //  ObjectList.ForEach(ob => ob.Id.ForEach(i => ob.Id.Remove(i)));
+
+            //        }
+            //    }
+
+
+            //});
+            List<int?> sortedID = new List<int?>();
+            foreach (int? val in id)
             {
-
-                bool ObjExist = false;
+                bool isExist = false;
                 ObjectList.ForEach(baseObj =>
                 {
-                    //Сравнение палитры объектов
-                    if (CheckObjectPalette(baseObj, newObj) && !ObjExist)
+                    if (baseObj.Id.Count == 1)
                     {
-                        ObjExist = true;
-                        ObjectComparison(ref baseObj, newObj);
-
+                        if (baseObj.Id[0] == val)
+                        isExist = true;
                     }
 
                 });
 
-                if (!ObjExist) ObjectList.Add(newObj);
+                if (!isExist) sortedID.Add(val);
+            }
 
-            });
+
+            FindedObjects.ForEach(o => o.Id.AddRange(sortedID));
+
+           
+
+
+            FindedObjects.ForEach(newObj =>
+                {
+                    bool ObjExist = false;
+                    ObjectList.ForEach(baseObj =>
+                    {
+
+                        //Сравнение палитры объектов
+                        if (CheckObjectPalette(baseObj, newObj) && !ObjExist)
+                        {
+                            ObjExist = true;
+                            if (baseObj.Id.Count > 1)
+                            {
+                                var b = baseObj.Id.Intersect(sortedID);
+                                baseObj.Id = new List<int?>();
+                                b.ToList().ForEach(el => baseObj.Id.Add(el));
+
+                                if (baseObj.Id.Count == 1)
+                                    ObjectList.ForEach(ob => { if (ob != baseObj) ob.Id.Remove(baseObj.Id[0]); });
+                               
+                            }
+
+                        }
+
+                    });
+
+                    if (!ObjExist) ObjectList.Add(newObj);
+
+                });
+
+
+            //FindedObjects.ForEach(o => o.Id.AddRange(id));
+
+            //FindedObjects.ForEach(newObj =>
+            //{
+
+            //    bool ObjExist = false;
+            //    ObjectList.ForEach(baseObj =>
+            //    {
+
+            //        //Сравнение палитры объектов
+            //        if (CheckObjectPalette(baseObj, newObj) && !ObjExist)
+            //        {
+            //            ObjExist = true;
+            //            ObjectComparison(ref baseObj, newObj);
+
+            //        }
+
+            //    });
+
+            //    if (!ObjExist) ObjectList.Add(newObj);
+
+            //});
 
 
         }
