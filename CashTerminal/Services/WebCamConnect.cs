@@ -67,6 +67,7 @@ namespace WebCam
         private static List<ObjectStruct> ObjectList { get; set; } = new List<ObjectStruct>();
         private static List<ObjectStruct> FoundObjects { get; set; } = new List<ObjectStruct>();
 
+        private static bool IsReady = true;
 
         public static bool IsStarted { get; set; }
 
@@ -559,6 +560,12 @@ namespace WebCam
             newObject(resultID);
         }
 
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         public static List<int?> GetSortedList(List<int?> id)
         {
             List<int?> sortedID = new List<int?>();
@@ -583,24 +590,8 @@ namespace WebCam
         public static void CheckId(List<int?> id)
         {
 
-            List<int?> sortedID = new List<int?>();
-            foreach (int? val in id)
-            {
-                bool isExist = false;
-                ObjectList.ForEach(baseObj =>
-                {
-                    if (baseObj.Id.Count == 1)
-                    {
-                        if (baseObj.Id[0] == val)
-                            isExist = true;
-                    }
-
-                });
-
-                if (!isExist) sortedID.Add(val);
-            }
-
-
+            List<int?> sortedID = GetSortedList(id);
+          
             FoundObjects.ForEach(newObj =>
                 {
                     newObj.Id.AddRange(sortedID);
