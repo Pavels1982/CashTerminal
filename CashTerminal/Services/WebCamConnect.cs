@@ -560,6 +560,27 @@ namespace WebCam
             newObject(resultID);
         }
 
+        public static List<int?> GetSortedList(List<int?> id)
+        {
+            List<int?> sortedID = new List<int?>();
+            foreach (int? val in id)
+            {
+                bool isExist = false;
+                ObjectList.ForEach(baseObj =>
+                {
+                    if (baseObj.Id.Count == 1)
+                    {
+                        if (baseObj.Id[0] == val)
+                            isExist = true;
+                    }
+
+                });
+
+                if (!isExist) sortedID.Add(val);
+            }
+            return sortedID;
+        }
+
         public static void CheckId(List<int?> id)
         {
 
@@ -572,7 +593,7 @@ namespace WebCam
                     if (baseObj.Id.Count == 1)
                     {
                         if (baseObj.Id[0] == val)
-                        isExist = true;
+                            isExist = true;
                     }
 
                 });
@@ -596,25 +617,39 @@ namespace WebCam
                         if (CheckObjectPalette(baseObj, newObj) && !ObjExist)
                         {
                             ObjExist = true;
+                            
                             if (baseObj.Id.Count > 1)
                             {
-                                var b = baseObj.Id.Intersect(sortedID);
+                                var b = baseObj.Id.Intersect(id);
                                 baseObj.Id = new List<int?>();
                                 b.ToList().ForEach(el => baseObj.Id.Add(el));
 
-                                if (baseObj.Id.Count == 1)
-                                    ObjectList.ForEach(ob => { if (ob != baseObj) ob.Id.Remove(baseObj.Id[0]); });
+                                //if (baseObj.Id.Count == 1)
+                                //    ObjectList.ForEach(ob => { if (ob != baseObj) ob.Id.Remove(baseObj.Id[0]); });
                                
                             }
 
                         }
+                       // if (!ObjExist) ObjectList.Add(newObj);
 
                     });
 
-                    if (!ObjExist) ObjectList.Add(newObj);
+                      if (!ObjExist) ObjectList.Add(newObj);
 
                 });
+            SortedBase();
 
+        }
+        private static void SortedBase()
+        {
+            ObjectList.Where(o => o.Id.Count == 1).ToList().ForEach(el => 
+            {
+
+                ObjectList.ForEach(ob => { if (ob != el) ob.Id.Remove(el.Id[0]); });
+
+
+
+            });
         }
 
 
