@@ -65,7 +65,7 @@ namespace WebCam
         private static List<AreaRectGroup> AreaRectTemplates { get; set; } = new List<AreaRectGroup>();
 
         private static List<ObjectStruct> ObjectList { get; set; } = new List<ObjectStruct>();
-        private static List<ObjectStruct> FindedObjects { get; set; } = new List<ObjectStruct>();
+        private static List<ObjectStruct> FoundObjects { get; set; } = new List<ObjectStruct>();
 
 
         public static bool IsStarted { get; set; }
@@ -510,9 +510,9 @@ namespace WebCam
             bc.ObjectsOrder = ObjectsOrder.Size;
             bc.ProcessImage(image);
             Blob[] blobs = bc.GetObjectsInformation();
-            FindedObjects = GetObjectListFromBlobs((o as Bitmap), blobs);
+            FoundObjects = GetObjectListFromBlobs((o as Bitmap), blobs);
             newObjectImage(GetBitmapImagesFromBlobs((o as Bitmap), blobs));
-            CheckForEqualsInDataBase(FindedObjects);
+            CheckForEqualsInDataBase(FoundObjects);
             //newObject(FindedObjects);
 
             BitmapImage btm = new BitmapImage();
@@ -531,11 +531,11 @@ namespace WebCam
 
         }
 
-        private static void CheckForEqualsInDataBase(List<ObjectStruct> findedObj)
+        private static void CheckForEqualsInDataBase(List<ObjectStruct> foundObjects)
         {
             List<int?> resultID = new List<int?>();
 
-            findedObj.ForEach(newObj =>
+            foundObjects.ForEach(newObj =>
             {
 
                 ObjectList.ForEach(baseObj =>
@@ -581,12 +581,12 @@ namespace WebCam
             }
 
 
-            FindedObjects.ForEach(o => o.Id.AddRange(sortedID));
+            FoundObjects.ForEach(o => o.Id.AddRange(sortedID));
 
 
 
 
-            FindedObjects.ForEach(newObj =>
+            FoundObjects.ForEach(newObj =>
                 {
                     bool ObjExist = false;
                     ObjectList.ForEach(baseObj =>
