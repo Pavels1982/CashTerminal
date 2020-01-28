@@ -506,8 +506,8 @@ namespace WebCam
 
             BlobCounterBase bc = new BlobCounter();
             bc.FilterBlobs = true;
-            bc.MinWidth = 80;
-            bc.MinHeight = 80;
+            bc.MinWidth = 90;
+            bc.MinHeight = 90;
             bc.MaxHeight = 380;
             bc.ObjectsOrder = ObjectsOrder.Size;
             bc.ProcessImage(image);
