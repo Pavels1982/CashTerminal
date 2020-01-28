@@ -13,19 +13,13 @@ namespace CashTerminal.Models
           public double Saturation { get; set; }
           public double Value { get; set; }
 
-        public HSVColor(double hue, double saturation, double value)
+        public HSVColor(double hue = 0, double saturation = 0, double value = 0)
         {
             this.Hue = hue;
             this.Saturation = saturation;
             this.Value = value;
         }
-        public HSVColor()
-        {
-            this.Hue = 0;
-            this.Saturation = 0;
-            this.Value = 0;
-        }
-
+      
     }
 
     public class ObjectStruct
