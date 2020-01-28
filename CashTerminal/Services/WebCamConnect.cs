@@ -70,6 +70,8 @@ namespace WebCam
 
         public static bool IsStarted { get; set; }
 
+        private static int ThreasholdLelev {get;set;}
+
         private static Bitmap StoreImage { get; set; }
         private static Bitmap NewImage { get; set; }
         private static bool IsImageRecived { get; set; }
@@ -543,9 +545,6 @@ namespace WebCam
                     //Сравнение палитры объектов
                     if (CheckObjectPalette(baseObj, newObj))
                     {
-                        //if (baseObj.Id.Count == 2)
-                        //    ObjectComparison(ref baseObj, newObj);
-
                         if (baseObj.Id.Count == 1)
                         {
                             resultID.Add(baseObj.Id[0]);
@@ -602,13 +601,9 @@ namespace WebCam
             }
 
 
-            FoundObjects.ForEach(o => o.Id.AddRange(sortedID));
-
-
-
-
             FoundObjects.ForEach(newObj =>
                 {
+                    newObj.Id.AddRange(sortedID);
                     bool ObjExist = false;
                     ObjectList.ForEach(baseObj =>
                     {
@@ -620,17 +615,12 @@ namespace WebCam
                             
                             if (baseObj.Id.Count > 1)
                             {
-                                var b = baseObj.Id.Intersect(id);
+                                var b = baseObj.Id.Intersect(sortedID);
                                 baseObj.Id = new List<int?>();
                                 b.ToList().ForEach(el => baseObj.Id.Add(el));
-
-                                //if (baseObj.Id.Count == 1)
-                                //    ObjectList.ForEach(ob => { if (ob != baseObj) ob.Id.Remove(baseObj.Id[0]); });
-                               
                             }
 
                         }
-                       // if (!ObjExist) ObjectList.Add(newObj);
 
                     });
 
@@ -644,11 +634,7 @@ namespace WebCam
         {
             ObjectList.Where(o => o.Id.Count == 1).ToList().ForEach(el => 
             {
-
                 ObjectList.ForEach(ob => { if (ob != el) ob.Id.Remove(el.Id[0]); });
-
-
-
             });
         }
 
