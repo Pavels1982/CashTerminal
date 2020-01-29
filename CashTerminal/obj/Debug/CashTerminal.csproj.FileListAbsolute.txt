@@ -62,4 +62,5 @@ D:\CashTerminal\CashTerminal\bin\Debug\Accord.xml
 D:\CashTerminal\CashTerminal\bin\Debug\Accord.Video.xml
 D:\CashTerminal\CashTerminal\bin\Debug\Accord.Video.Ximea.xml
 D:\CashTerminal\CashTerminal\obj\Debug\CashTerminal_Content.g.cs
+D:\CashTerminal\CashTerminal\bin\Debug\Newtonsoft.Json.dll
 D:\CashTerminal\CashTerminal\obj\Debug\CashTerminal.csprojResolveAssemblyReference.cache

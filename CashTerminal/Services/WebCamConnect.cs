@@ -7,6 +7,7 @@ using AForge.Video.DirectShow;
 using CashTerminal.Models;
 using Emgu.CV;
 using Emgu.CV.Structure;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -153,7 +154,12 @@ namespace WebCam
         }
 
 
+        public static void ClearDataBase()
+        {
+            ObjectList.Clear();
+            FoundObjects.Clear();
 
+        }
 
         private static WebCamDevice currentDevice;
         public static WebCamDevice CurrentDevice
@@ -216,7 +222,7 @@ namespace WebCam
             }
         }
 
-        public static void Start()
+        public static bool Start()
         {
             if (videoCaptureDevice.SourceObject == null && !IsStarted)
             {
@@ -230,6 +236,7 @@ namespace WebCam
                         timer  = new DispatcherTimer() { Interval = TimeSpan.FromSeconds(1) };
                         timer.Tick += Timer_Tick;
                         timer.Start();
+                        ReadCorners();
                     }
                 }
                 catch
@@ -238,6 +245,8 @@ namespace WebCam
                 }
 
             }
+            return IsStarted;
+
         }
 
         private static void Timer_Tick(object sender, EventArgs e)
@@ -351,8 +360,8 @@ namespace WebCam
                 //tmp = ColorBalance(tmp, t.B, t.G, t.R);
 
 
-                AreaRect leftUpArea = GetPixelsFromArea(tmp, 0, 0, 96, 4);
-                AreaRect RightUpArea = GetPixelsFromArea(tmp, 1184, 0, 96, 4);
+                AreaRect leftUpArea = GetPixelsFromArea(tmp, 0, 0, 96, 4,true);
+                AreaRect RightUpArea = GetPixelsFromArea(tmp, 1184, 0, 96, 4,true);
 
 
                 upArea = new AreaRectGroup(leftUpArea, RightUpArea);
@@ -442,7 +451,7 @@ namespace WebCam
         {
             int coincidences = 0;
             int coincInArea = 0;
-            int threshold = 100;
+            int threshold = 20;
             int div = threshold / 2;
             if (AreaRectTemplates.Count > 0)
             {
@@ -458,7 +467,7 @@ namespace WebCam
 
                     }
                     int per = (int)(((double)coincInArea / lenghtArea) * 100);
-                    if (per > 50) { coincidences++; continue; }
+                    if (per > 70) { coincidences++; continue; }
 
                     coincInArea = 0;
                 }
@@ -536,6 +545,7 @@ namespace WebCam
 
         private static void CheckForEqualsInDataBase(List<ObjectStruct> foundObjects)
         {
+           // SortedBase();
             List<int?> resultID = new List<int?>();
 
             foundObjects.ForEach(newObj =>
@@ -615,7 +625,7 @@ namespace WebCam
 
                     });
 
-                      if (!ObjExist) ObjectList.Add(newObj);
+                      if (!ObjExist && newObj.Id.Count > 0) ObjectList.Add(newObj);
 
                 });
             SortedBase();
@@ -623,10 +633,18 @@ namespace WebCam
         }
         private static void SortedBase()
         {
-            ObjectList.Where(o => o.Id.Count == 1).ToList().ForEach(el => 
+            int consist = 0;
+            bool count = true;
+            while (count)
             {
-                ObjectList.ForEach(ob => { if (ob != el) ob.Id.Remove(el.Id[0]); });
-            });
+                ObjectList.Where(o => o.Id.Count == 1).ToList().ForEach(el =>
+                {
+                    ObjectList.ForEach(ob => { if (ob != el && el.Id != null) { try { if (ob.Id.Remove(el.Id[0])) consist++; } catch { }  } });
+                });
+
+                count = consist >= 1 ? true : false;
+                consist = consist > 0 ? consist -= 1: 0;
+            }
         }
 
 
@@ -698,7 +716,7 @@ namespace WebCam
 
 
             //AreaRect wbArea = GetPixelsFromArea(source, 0, 0, 5, 5);
-            //int tilt = (180 - wbArea.Pixels[0]);
+            //int tilt = (130 - wbArea.Pixels[0]);
             //BrightnessCorrection filter2 = new BrightnessCorrection(tilt);
             //filter2.ApplyInPlace(source);
 
@@ -867,7 +885,7 @@ namespace WebCam
         }
 
 
-        private static AreaRect GetPixelsFromArea(Bitmap source, int x, int y, int size, int scale)
+        private static AreaRect GetPixelsFromArea(Bitmap source, int x, int y, int size, int scale, bool isBinary = false)
         {
             int areaWidth = (size / scale);
             byte[] pixels = new byte[areaWidth * areaWidth];
@@ -892,6 +910,19 @@ namespace WebCam
 
                     }
                     pixels[index] = (byte)(grayScaleSum / (scale * scale));
+
+                    if (isBinary)
+                    {
+                        if (pixels[index] > 60)
+                        {
+                            pixels[index] = 255;
+                        }
+                        else
+                        {
+                            pixels[index] = 0;
+                        }
+                    }
+
                     index++;
 
                 }
@@ -1044,7 +1075,29 @@ namespace WebCam
             return resultBitmap;
         }
 
+        public static void SaveCorners()
+        {
+            using (StreamWriter file = File.CreateText(@"corners_data.json"))
+            {
+                JsonSerializer serializer = new JsonSerializer();
+                serializer.Serialize(file, AreaRectTemplates);
+            }
+        }
 
+        private static void ReadCorners()
+        {
+            using (StreamReader file = File.OpenText(@"corners_data.json"))
+            {
+                JsonSerializer serializer = new JsonSerializer();
+                AreaRectTemplates.AddRange((List<AreaRectGroup>) serializer.Deserialize(file, typeof(List<AreaRectGroup>)));
+            }
+        }
+
+        public static void ClearCorners()
+        {
+            AreaRectTemplates.Clear();
+            SaveCorners();
+        }
 
     }
 }

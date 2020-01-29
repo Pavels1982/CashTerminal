@@ -1,17 +1,20 @@
 ﻿using AForge.Imaging.ColorReduction;
 using CashTerminal.Models;
 using CashTerminal.Services;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using WebCam;
+
 
 namespace CashTerminal.ViewModels
 {
@@ -20,10 +23,23 @@ namespace CashTerminal.ViewModels
         public ObservableCollection<WebCamDevice> ListOfWebCamDevice { get; set; } = new ObservableCollection<WebCamDevice>();
 
         public ObservableCollection<BitmapImage> ObjectList { get; set; } = new ObservableCollection<BitmapImage>();
-        public List<Color> ObjectColorList { get; set; } = new List<Color>();
 
-        public int WeightLeft { get; set; }
-        public int WeightRight { get; set; }
+
+        private bool isWebCamStreaming;
+        public bool IsWebCamStreaming
+        {
+            get
+            {
+                return isWebCamStreaming;
+            }
+
+            set
+            {
+                isWebCamStreaming = value;
+            }
+
+        }
+
 
         private bool isConfigurationMode;
         public bool IsConfigurationMode
@@ -39,51 +55,8 @@ namespace CashTerminal.ViewModels
             }
         }
 
-        private bool isWeightMode;
-        public bool IsWeightMode
-        {
-            get => isWeightMode;
-
-            set
-            {
-                isWeightMode = value;
-
-                WebCamConnect.IsWeightMode = value;
-
-            }
-        }
-
-
-
-
-        private bool isThreshold;
-        public bool IsThreshold
-        {
-            get => isThreshold;
-
-            set
-            {
-                isThreshold = value;
-                if (!value) WebCamConnect.Threshold = null;
-
-            }
-        }
-
-
-
-
-        private int? threshold;
-        public int? Threshold
-        {
-            get => threshold;
-            set
-            {
-                    threshold = value;
-                    if (isThreshold) WebCamConnect.Threshold = value;
-            }
-        }
-
-
+       
+    
         private WebCamDevice selectedWebCamDevice;
         public WebCamDevice SelectedWebCamDevice
         {
@@ -105,6 +78,28 @@ namespace CashTerminal.ViewModels
 
         public BitmapImage Image { get; set; }
 
+        public ICommand SaveCornersCommand
+        {
+            get
+            {
+                return new RelayCommand((o) =>
+                {
+                    WebCamConnect.SaveCorners();
+                });
+            }
+        }
+
+        public ICommand ClearCornersCommand
+        {
+            get
+            {
+                return new RelayCommand((o) =>
+                {
+                    WebCamConnect.ClearCorners();
+                });
+            }
+        }
+
         public ICommand AddTemplates
         {
             get
@@ -123,7 +118,7 @@ namespace CashTerminal.ViewModels
             {
                 return new RelayCommand((o) =>
                 {
-                    WebCamConnect.Start();
+                    IsWebCamStreaming = WebCamConnect.Start(); ;
                 });
             }
         }
@@ -135,11 +130,23 @@ namespace CashTerminal.ViewModels
                 return new RelayCommand((o) =>
                 {
                     WebCamConnect.Stop();
+                    IsWebCamStreaming = false;
                 });
             }
         }
 
+        public ICommand ClearDataBaseCommand
+        {
+            get
+            {
+                return new RelayCommand((o) =>
+                {
+                    WebCamConnect.ClearDataBase();
+                });
+            }
+        }
 
+    
 
         public WebCamWindowViewModel()
         {

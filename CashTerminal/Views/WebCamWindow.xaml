@@ -20,11 +20,66 @@
                         </DataTemplate>
                     </ComboBox.ItemTemplate>
                 </ComboBox>
-                <Button Width="60" Content="Старт" Command="{Binding StartStreamCommand}"/>
-                <Button Width="60" Content="Стоп" Command="{Binding StopStreamCommand}"/>
-                <CheckBox IsChecked="{Binding IsConfigurationMode}" Content="ConfigurationMode"/>
-                <CheckBox IsChecked="{Binding IsWeightMode}" Content="Анализ по весам"/>
-                
+        
+                <Button>
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Command" Value="{Binding StartStreamCommand}"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsWebCamStreaming}" Value="True">
+                                    <Setter Property="Command" Value="{Binding StopStreamCommand}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+
+                        </Style>
+                    </Button.Style>
+                    <StackPanel Orientation="Horizontal" Margin="5 0 5 0">
+                        <Rectangle Width="15" Height="10" Stroke="White" Margin="2">
+                            <Rectangle.Style>
+                                <Style TargetType="Rectangle">
+                                    <Setter Property="Fill" Value="Red"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsWebCamStreaming}" Value="True" >
+                                            <Setter Property="Fill" Value="Green"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Rectangle.Style>
+                        </Rectangle>
+                        <TextBlock>
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Text" Value="Старт"/>
+                                    <Style.Triggers>
+                                        <DataTrigger  Binding="{Binding IsWebCamStreaming}" Value="True">
+                                            <Setter Property="Text" Value="Стоп" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+
+                </Button>
+
+
+
+
+
+                <CheckBox IsChecked="{Binding IsConfigurationMode}" Content="ConfigurationMode">
+                    <CheckBox.Style>
+                        <Style TargetType="CheckBox">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsWebCamStreaming}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </CheckBox.Style>
+                </CheckBox>
+
 
                 <!--<CheckBox IsChecked="{Binding IsThreshold}" Content="IsBinary" />
                 <Slider Value="{Binding Threshold}" Width="155" Maximum="255" />-->
@@ -32,20 +87,51 @@
             </StackPanel>
 
             <Image  Source="{Binding Image}" />
+           
+            <StackPanel Orientation="Horizontal">
 
-            <Button Content="Add" Width="200" Command="{Binding AddTemplates}">
-                <Button.Style>
-                    <Style TargetType="Button">
-                        <Setter Property="Visibility" Value="Collapsed"/>
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding IsConfigurationMode}" Value="True">
-                                <Setter Property="Visibility" Value="Visible"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </Button.Style>
-            </Button>
+                <Button Content="Добавить углы" Command="{Binding AddTemplates}" Margin="5">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsConfigurationMode}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
 
+                <Button Content="Сохранить углы"  Command="{Binding SaveCornersCommand}" Margin="5">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsConfigurationMode}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+
+                <Button Content="Сбросить углы"  Command="{Binding ClearCornersCommand}" Margin="5">
+                    <Button.Style>
+                        <Style TargetType="Button">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsConfigurationMode}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+
+             
+            </StackPanel>
+            
             <ScrollViewer VerticalScrollBarVisibility="Visible">
                 <ListView ItemsSource="{Binding ObjectList}">
                 <ItemsControl.ItemsPanel>
@@ -57,13 +143,28 @@
                     <DataTemplate>
                         <StackPanel Orientation="Vertical" VerticalAlignment="Stretch">
                             <Image Source="{Binding}" HorizontalAlignment="Center" VerticalAlignment="Top" Width="100" Height="100"/>
-                                                    </StackPanel>
+                             </StackPanel>
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>
                 </ScrollViewer>
 
-                    <!--<UniformGrid Columns="2">
+            <Button  Content="Очистить память" Command="{Binding ClearDataBaseCommand}" Margin="5">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsWebCamStreaming}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+
+
+
+            <!--<UniformGrid Columns="2">
                 <TextBlock Grid.Column="0" Text="{Binding WeightLeft}"/>
                 <TextBlock Grid.Column="1" Text="{Binding WeightRight}"/>
             </UniformGrid>-->
