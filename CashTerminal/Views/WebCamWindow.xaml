@@ -5,7 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CashTerminal.Views"
         mc:Ignorable="d"
-        Title="WebCamWindow" Height="800" Width="542.136">
+        Title="Анализатор" Height="800" Width="542.136"
+       Closed="Window_Closed">
     <Grid>
         <StackPanel Orientation="Vertical">
            
@@ -33,10 +34,10 @@
 
                         </Style>
                     </Button.Style>
-                    <StackPanel Orientation="Horizontal" Margin="5 0 5 0">
-                        <Rectangle Width="15" Height="10" Stroke="White" Margin="2">
-                            <Rectangle.Style>
-                                <Style TargetType="Rectangle">
+                    <StackPanel Orientation="Horizontal" Margin="5 0 15 0">
+                        <Ellipse Width="10" Height="10" Stroke="White" Margin="2 1 7 0">
+                            <Ellipse.Style>
+                                <Style TargetType="Ellipse">
                                     <Setter Property="Fill" Value="Red"/>
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding IsWebCamStreaming}" Value="True" >
@@ -44,8 +45,8 @@
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
-                            </Rectangle.Style>
-                        </Rectangle>
+                            </Ellipse.Style>
+                        </Ellipse>
                         <TextBlock>
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
@@ -86,8 +87,20 @@
                 
             </StackPanel>
 
-            <Image  Source="{Binding Image}" />
-           
+            <Image  Source="{Binding Image}" >
+                <Image.Style>
+                    <Style TargetType="Image">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsConfigurationMode}" Value="True">
+                                <Setter Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+
+                    </Style>
+                </Image.Style>
+            </Image>
+
             <StackPanel Orientation="Horizontal">
 
                 <Button Content="Добавить углы" Command="{Binding AddTemplates}" Margin="5">

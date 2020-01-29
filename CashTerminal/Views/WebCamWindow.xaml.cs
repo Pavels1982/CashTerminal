@@ -12,6 +12,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using WebCam;
 
 namespace CashTerminal.Views
 {
@@ -24,6 +25,13 @@ namespace CashTerminal.Views
         {
             InitializeComponent();
             this.DataContext = new WebCamWindowViewModel();
+        }
+
+
+
+        private void Window_Closed(object sender, EventArgs e)
+        {
+            WebCamConnect.Stop();
         }
     }
 }

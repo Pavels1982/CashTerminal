@@ -1,12 +1,8 @@
-﻿using Accord.Video.Ximea;
-using AForge;
-using AForge.Imaging;
+﻿using AForge.Imaging;
 using AForge.Imaging.ColorReduction;
 using AForge.Imaging.Filters;
 using AForge.Video.DirectShow;
 using CashTerminal.Models;
-using Emgu.CV;
-using Emgu.CV.Structure;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -16,9 +12,7 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 
@@ -397,7 +391,6 @@ namespace WebCam
                     {
                         if (!IsImageRecived)
                         {
-
                             context.Post(PostImage, new Bitmap(tmp, new Size(640, 480)));
                             StoreImage = new Bitmap(tmp, new Size(32, 24));
                             IsImageRecived = true;
@@ -527,19 +520,19 @@ namespace WebCam
             CheckForEqualsInDataBase(FoundObjects);
             //newObject(FindedObjects);
 
-            BitmapImage btm = new BitmapImage();
-            using (MemoryStream memStream2 = new MemoryStream())
-            {
-                (image).Save(memStream2, System.Drawing.Imaging.ImageFormat.Png);
-                memStream2.Position = 0;
-                btm.BeginInit();
-                btm.CacheOption = BitmapCacheOption.OnLoad;
-                btm.UriSource = null;
-                btm.StreamSource = memStream2;
-                btm.EndInit();
-            }
+            //BitmapImage btm = new BitmapImage();
+            //using (MemoryStream memStream2 = new MemoryStream())
+            //{
+            //    (image).Save(memStream2, System.Drawing.Imaging.ImageFormat.Png);
+            //    memStream2.Position = 0;
+            //    btm.BeginInit();
+            //    btm.CacheOption = BitmapCacheOption.OnLoad;
+            //    btm.UriSource = null;
+            //    btm.StreamSource = memStream2;
+            //    btm.EndInit();
+            //}
 
-            newFrame(btm);
+            //newFrame(btm);
 
         }
 
@@ -1086,10 +1079,14 @@ namespace WebCam
 
         private static void ReadCorners()
         {
-            using (StreamReader file = File.OpenText(@"corners_data.json"))
+
+            if (File.Exists(@"corners_data.json"))
             {
-                JsonSerializer serializer = new JsonSerializer();
-                AreaRectTemplates.AddRange((List<AreaRectGroup>) serializer.Deserialize(file, typeof(List<AreaRectGroup>)));
+                using (StreamReader file = File.OpenText(@"corners_data.json"))
+                {
+                    JsonSerializer serializer = new JsonSerializer();
+                    AreaRectTemplates.AddRange((List<AreaRectGroup>)serializer.Deserialize(file, typeof(List<AreaRectGroup>)));
+                }
             }
         }
 

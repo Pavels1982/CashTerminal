@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CashTerminal"
         mc:Ignorable="d"
-        Title="MainWindow" Height="600" Width="1000"
+        Title="Терминал" Height="600" Width="1000"
         WindowStartupLocation="CenterScreen"
         Closed="Window_Closed"
         >
@@ -297,7 +297,7 @@
 
                             <DataGridTemplateColumn
                         Width="*"
-                        CanUserResize="False"
+                        CanUserResize="True"
                          Header="Наименование">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
