@@ -12,6 +12,5 @@ namespace CashTerminal.Services
     public interface Iitem
     {
          string Name { get; set; }
-         ObjectStruct ObjectStruct { get; set; }
     }
 }

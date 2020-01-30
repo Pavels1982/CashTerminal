@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CashTerminal.Views"
         mc:Ignorable="d"
-        Title="Анализатор" Height="800" Width="542.136"
+        Title="Анализатор" Height="500" Width="500"
        Closed="Window_Closed">
     <Grid>
         <StackPanel Orientation="Vertical">

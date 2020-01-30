@@ -230,7 +230,10 @@ namespace WebCam
                         timer  = new DispatcherTimer() { Interval = TimeSpan.FromSeconds(1) };
                         timer.Tick += Timer_Tick;
                         timer.Start();
-                        ReadCorners();
+                        AreaRectTemplates = ReadData<List<AreaRectGroup>>(@"corners_data.json") as List<AreaRectGroup>;
+
+                        var result = ReadData<List<ObjectStruct>>(@"objects_data.json") as List<ObjectStruct>;
+                        if (result != null) ObjectList = result;
                     }
                 }
                 catch
@@ -287,6 +290,7 @@ namespace WebCam
             {
                 videoCaptureDevice.Stop();
                 IsStarted = false;
+                SaveData(ObjectList, @"objects_data.json");
             }
             catch
             {
@@ -460,7 +464,7 @@ namespace WebCam
 
                     }
                     int per = (int)(((double)coincInArea / lenghtArea) * 100);
-                    if (per > 70) { coincidences++; continue; }
+                    if (per > 60) { coincidences++; continue; }
 
                     coincInArea = 0;
                 }
@@ -560,12 +564,13 @@ namespace WebCam
 
             });
 
+
             newObject(resultID);
         }
 
 
         /// <summary>
-        /// 
+        /// Метод возвращает список, который включает в себя id только неподтверждённых блюд.
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
@@ -587,9 +592,31 @@ namespace WebCam
 
                 if (!isExist) sortedID.Add(val);
             }
+            ///Здесь должна быть проверка на наличие в отсортированном списке id-блюд, которые были занесены ранее как неподтверждённые. 
+            ///По-идеи  так как они ещё неподтвержденные, но уже известно что у них иная палитра то по сути они относятся к иному объекту, которые уже можно не сравнивать с новыми.
+            ///Метод работает при определённых условиях, возможно нужен более глубокий анализ с применением функции сравнения палитры. 
+            ///Данный метод даст точное определение одного нового объекта на фоне остальных неизвестных. 
+            //ObjectList.ForEach(ob =>
+            //{
+            //    if (ob.Id.Count > 1)
+            //    {
+            //        ob.Id.ForEach(idbase =>
+            //        {
+            //            if (sortedID.Any(i => i == idbase) ) sortedID.Remove(idbase);
+            //        });
+
+            //    }
+            //});
+
+
             return sortedID;
         }
 
+
+        /// <summary>
+        /// Метод сравнения id-блюд с базой.
+        /// </summary>
+        /// <param name="id">Список id-блюд, переданный из терминала.</param>
         public static void CheckId(List<int?> id)
         {
 
@@ -624,15 +651,32 @@ namespace WebCam
             SortedBase();
 
         }
+
+        /// <summary>
+        /// Метод сортировки базы данных объектов. 
+        /// Включает итеративный блок while, который работает до тех пор пока база содержит в списках (неподтверждённых объектов) id-блюд, которые уже подтвердились.
+        /// </summary>
         private static void SortedBase()
         {
             int consist = 0;
             bool count = true;
+
             while (count)
             {
                 ObjectList.Where(o => o.Id.Count == 1).ToList().ForEach(el =>
                 {
-                    ObjectList.ForEach(ob => { if (ob != el && el.Id != null) { try { if (ob.Id.Remove(el.Id[0])) consist++; } catch { }  } });
+                    ObjectList.ForEach(ob => 
+                    {
+                        if (ob != el && el.Id != null)
+                        {
+                            ///Костыль! Здесь блок try так как при определённых условиях коллекция el.Id == null. Нужно дебажить.
+                            try
+                            {
+                                if (ob.Id.Remove(el.Id[0])) consist++;
+                            } catch
+                            { }
+                        }
+                    });
                 });
 
                 count = consist >= 1 ? true : false;
@@ -659,7 +703,7 @@ namespace WebCam
             
         }
 
-
+        
         private static bool CheckObjectPalette(ObjectStruct based, ObjectStruct current)
         {
             if (current.Tone != null && based.Tone != null)
@@ -676,7 +720,6 @@ namespace WebCam
                                 considence++;
                         index++;
                     }
-
                 }
                 int per = (int)(((double)considence / based.Tone.Length) * 100);
                 if (per >= 65)
@@ -1070,25 +1113,39 @@ namespace WebCam
 
         public static void SaveCorners()
         {
-            using (StreamWriter file = File.CreateText(@"corners_data.json"))
-            {
-                JsonSerializer serializer = new JsonSerializer();
-                serializer.Serialize(file, AreaRectTemplates);
-            }
+            SaveData(AreaRectTemplates, @"corners_data.json");
         }
 
-        private static void ReadCorners()
+        public static void SaveData(object obj, string fileName)
         {
-
-            if (File.Exists(@"corners_data.json"))
+            try
             {
-                using (StreamReader file = File.OpenText(@"corners_data.json"))
+                using (StreamWriter file = File.CreateText(fileName))
                 {
                     JsonSerializer serializer = new JsonSerializer();
-                    AreaRectTemplates.AddRange((List<AreaRectGroup>)serializer.Deserialize(file, typeof(List<AreaRectGroup>)));
+                    serializer.Serialize(file, obj);
                 }
             }
+            catch
+            { }
+
         }
+
+
+        public static object ReadData<T>(string fileName)
+        {
+            if (File.Exists(fileName))
+            {
+                JsonSerializer serializer = new JsonSerializer();
+                using (StreamReader file = File.OpenText(fileName))
+                {
+                    return serializer.Deserialize(file, typeof(T));
+                }
+
+            }
+            return null;
+        }
+
 
         public static void ClearCorners()
         {

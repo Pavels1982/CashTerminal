@@ -129,16 +129,7 @@ namespace CashTerminal.ViewModels
             {
                 Dish removableObject = o as Dish;
                 //(ItemList.Where(i => i.Name == removableObject.Name).First() as Dish).Color = new Color();
-                DishData.DishGroup.ForEach(group =>
-                {
-                    foreach (Dish dish in group.ListDishes)
-                    {
-                        if (dish.Name == removableObject.Name)
-                        {
-                            dish.ObjectStruct = new ObjectStruct();
-                        }
-                    }
-                });
+       
                 BasketList.Remove(removableObject);
                 CalculateBasketPrice();
 
@@ -170,11 +161,11 @@ namespace CashTerminal.ViewModels
                     }
                     else
                     {
-                        MessageBox.Show("Оплата произведена!");
                         PostData(BasketList);
                         BasketList.Clear();
                         SelectedBasketItem = null;
                         CalculateBasketPrice();
+                        MessageBox.Show("Оплата произведена!");
                     }
 
                 });

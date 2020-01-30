@@ -26,8 +26,6 @@ namespace CashTerminal.Models
         /// </summary>
         public int Id { get; set; }
 
-
-        public ObjectStruct ObjectStruct { get; set; } = new ObjectStruct();
         /// <summary>
         /// Get or set наименование блюда.
         /// </summary>
