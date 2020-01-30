@@ -118,7 +118,7 @@ namespace CashTerminal.ViewModels
             {
                 return new RelayCommand((o) =>
                 {
-                    IsWebCamStreaming = WebCamConnect.Start(); ;
+                    IsWebCamStreaming = WebCamConnect.StartDevice(); ;
                 });
             }
         }
@@ -129,7 +129,7 @@ namespace CashTerminal.ViewModels
             {
                 return new RelayCommand((o) =>
                 {
-                    WebCamConnect.Stop();
+                    WebCamConnect.StopDevice();
                     IsWebCamStreaming = false;
                 });
             }

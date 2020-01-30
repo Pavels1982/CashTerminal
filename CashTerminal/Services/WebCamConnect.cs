@@ -21,12 +21,10 @@ namespace WebCam
     public class AreaRect
     {
         public byte[] Pixels { get; set; }
-        public System.Windows.Point AbsolutePos { get; set; }
 
-        public AreaRect(byte[] pixels, System.Windows.Point absolutePos)
+        public AreaRect(byte[] pixels)
         {
             this.Pixels = pixels;
-            this.AbsolutePos = absolutePos;
         }
 
     }
@@ -43,62 +41,71 @@ namespace WebCam
         }
     }
 
+    public class HSVColor
+    {
+        public double Hue { get; set; }
+        public double Saturation { get; set; }
+        public double Value { get; set; }
 
+        public HSVColor(double hue = 0, double saturation = 0, double value = 0)
+        {
+            this.Hue = hue;
+            this.Saturation = saturation;
+            this.Value = value;
+        }
+
+    }
+
+    public class ObjectStruct
+    {
+        public int Radius { get; set; } = 0;
+        public HSVColor[] Tone { get; set; }
+        public List<int?> Id { get; set; } = new List<int?>();
+    }
 
     public static class WebCamConnect
     {
+        private static int framerate = 1;
+        private static int countframe = 0;
         private static SynchronizationContext context = SynchronizationContext.Current;
-
         private static VideoCaptureDevice videoCaptureDevice = new VideoCaptureDevice();
-
+        private static WebCamDevice currentDevice;
         private static List<WebCamDevice> deviceList = new List<WebCamDevice>();
-
         private static AreaRectGroup upArea { get; set; }
-
         private static DispatcherTimer timer { get; set; }
-
         private static List<AreaRectGroup> AreaRectTemplates { get; set; } = new List<AreaRectGroup>();
-
         private static List<ObjectStruct> ObjectList { get; set; } = new List<ObjectStruct>();
         private static List<ObjectStruct> FoundObjects { get; set; } = new List<ObjectStruct>();
-
-        private static bool IsReady = true;
-
-        public static bool IsStarted { get; set; }
-
-        private static int ThreasholdLelev {get;set;}
-
+        private static object CurrentFrame { get; set; }
         private static Bitmap StoreImage { get; set; }
         private static Bitmap NewImage { get; set; }
         private static bool IsImageRecived { get; set; }
         private static int ElapsedSec { get; set; }
 
         public static bool IsConfigurationMode;
+        public static bool IsStarted { get; set; }
 
-        private static event NewFrame_Event newFrame;
+        private static event NewObject_Event newObject;
+        private static event CalibrateFrame_Event calibFrame;
+        private static event NewObjectImage_Event newObjectImage;
 
-        public delegate void NewFrame_Event(BitmapImage image);
+        public delegate void CalibrateFrame_Event(BitmapImage image);
+        public delegate void NewObject_Event(List<int?> id);
+        public delegate void NewObjectImage_Event(List<BitmapImage> image);
 
-        private static object CurrentFrame { get; set; }
-
-        public static event NewFrame_Event NewFrame
+        public static event CalibrateFrame_Event NewFrame
         {
             add
             {
-                if (newFrame == null)
-                    newFrame += value;
+                if (calibFrame == null)
+                    calibFrame += value;
             }
             remove
             {
-                newFrame -= value;
+                calibFrame -= value;
             }
 
         }
-
-
-        private static event NewObject_Event newObject;
-
-        public delegate void NewObject_Event(List<int?> id);
 
         public static event NewObject_Event NewObject
         {
@@ -114,11 +121,6 @@ namespace WebCam
 
         }
 
-
-        private static event NewObjectImage_Event newObjectImage;
-
-        public delegate void NewObjectImage_Event(List<BitmapImage> image);
-
         public static event NewObjectImage_Event NewObjectImage
         {
             add
@@ -133,10 +135,6 @@ namespace WebCam
 
         }
 
-
-
-        public static bool IsWeightMode { get; set; }
-
         public static void AddTemplates()
         {
             AreaRectTemplates.Add(upArea);
@@ -147,7 +145,6 @@ namespace WebCam
             AreaRectTemplates.Clear();
         }
 
-
         public static void ClearDataBase()
         {
             ObjectList.Clear();
@@ -155,7 +152,6 @@ namespace WebCam
 
         }
 
-        private static WebCamDevice currentDevice;
         public static WebCamDevice CurrentDevice
         {
             get
@@ -174,12 +170,6 @@ namespace WebCam
        
                     videoCaptureDevice.Source = value.Moniker;
                     videoCaptureDevice.VideoResolution = videoCaptureDevice.VideoCapabilities[18];
-
-
-                    // videoCaptureDevice.SetCameraProperty(CameraControlProperty.Exposure,1, AForge.Video.DirectShow.CameraControlFlags.Manual);
-                    // videoCaptureDevice.SetCameraProperty(CameraControlProperty.Focus, 8, AForge.Video.DirectShow.CameraControlFlags.Manual);
-                    //videoCaptureDevice.SetCameraProperty(CameraControlProperty.Iris, 16, AForge.Video.DirectShow.CameraControlFlags.Manual);
-
                 }
 
                 currentDevice = value;
@@ -187,12 +177,6 @@ namespace WebCam
             }
 
         }
-
-        enum type { leftUp, rightUp };
-        private static int framerate = 1;
-        private static int countframe = 0;
-        public static int? Threshold;
-
 
         public static List<WebCamDevice> GetDevices()
         {
@@ -209,14 +193,11 @@ namespace WebCam
         {
             if (device != null)
             {
-                //XimeaCamera camera = new XimeaCamera();
-                //camera.Open(0);
-                //camera.SetParam(CameraParameter.AutoWhiteBalance, 0);
                 CurrentDevice = device;
             }
         }
 
-        public static bool Start()
+        public static bool StartDevice()
         {
             if (videoCaptureDevice.SourceObject == null && !IsStarted)
             {
@@ -252,40 +233,21 @@ namespace WebCam
             if (ElapsedSec == 1 && CurrentFrame != null)
             {
                 IsImageRecived = false;
-           //     Debug.WriteLine(string.Format("--"));
-           //     GetDominantColor(CurrentFrame);
             }
 
 
             if (ElapsedSec == 2 && CurrentFrame != null)
             {
-
-                //if (CheckEqualsImage(new Bitmap((CurrentFrame as Bitmap), new Size(32, 24)), StoreImage))
-                //{
-                 Debug.WriteLine(string.Format("--"));
-            // Color t = GetBwColor(CurrentFrame as Bitmap);
-            // CurrentFrame = ColorBalance(CurrentFrame as Bitmap, t.B, t.G, t.R);
-
-            //Color t = BwArea(CurrentFrame as Bitmap, 0, 0, 5);
-            ////Color t = GetBwColor(CurrentFrame as Bitmap);
-            //CurrentFrame = ColorBalance(CurrentFrame as Bitmap, t.B, t.G, t.R);
-
                 GetDominantColor(CurrentFrame);
-                //}
-
-
-
             }
 
             ElapsedSec++;
         }
 
-        public static void Stop()
+        public static void StopDevice()
         {
 
             videoCaptureDevice.NewFrame -= VideoCaptureDevice_NewFrame;
-          //  videoCaptureDevice.SetCameraProperty(CameraControlProperty.Exposure, 0, AForge.Video.DirectShow.CameraControlFlags.Auto);
-
             try
             {
                 videoCaptureDevice.Stop();
@@ -298,19 +260,16 @@ namespace WebCam
             }
         }
 
-
         private static Color GetBwColor(Bitmap source)
         {
             byte R = 0;
             byte G = 0;
             byte B = 0;
-            // Color result = Color.FromArgb(255, 0, 0, 0); ;
             for (int x = 0; x < source.Width; x++)
             {
                 for (int y = 0; y < source.Height; y++)
                 {
                     Color c1 = source.GetPixel(x, y);
-                    // if (c1.R + c1.G + c1.B > result.R + result.G + result.B) result = Color.FromArgb(255, c1.R, c1.G, c1.B);
                     if (c1.R > R) R = c1.R;
                     if (c1.G > G) G = c1.G;
                     if (c1.B > B) B = c1.B;
@@ -318,46 +277,15 @@ namespace WebCam
             }
 
             return Color.FromArgb(255, R, G, B);
-            //return result;
-
+ 
         }
-
 
         private static void VideoCaptureDevice_NewFrame(object sender, AForge.Video.NewFrameEventArgs eventArgs)
         {
 
-            //  HistogramEqualization filter = new HistogramEqualization();
-            //// ContrastCorrection filter2 = new ContrastCorrection(int.MaxValue);
-            //BrightnessCorrection filter2 = new BrightnessCorrection(-50);
-            //// process image
-           // GammaCorrection filter = new GammaCorrection(0.8);
-            // apply the filter
-            
-
-
-
-
             if (countframe >= framerate)
             {
                 Bitmap tmp = (Bitmap)eventArgs.Frame;
-                //   filter.ApplyInPlace(tmp);
-
-                //AreaRect wbArea = GetPixelsFromArea(tmp, 0, 0, 5, 5);
-                //int tilt = (130 - wbArea.Pixels[0]);
-                //BrightnessCorrection filter2 = new BrightnessCorrection(tilt);
-               // filter2.ApplyInPlace(tmp);
-
-                //   double tilt = (wbArea.Pixels[0] / 100 );
-
-                //Color t = BwArea(tmp, 0, 0, 5);
-
-
-
-
-                //Color t = GetBwColor(tmp);
-                //tmp = ColorBalance(tmp, t.B, t.G, t.R);
-
-
                 AreaRect leftUpArea = GetPixelsFromArea(tmp, 0, 0, 96, 4,true);
                 AreaRect RightUpArea = GetPixelsFromArea(tmp, 1184, 0, 96, 4,true);
 
@@ -365,30 +293,18 @@ namespace WebCam
                 upArea = new AreaRectGroup(leftUpArea, RightUpArea);
                 if (IsConfigurationMode)
                 {
-                    context.Post(PostImageConfig, MergeImage(GetBitmapFrom(leftUpArea), GetBitmapFrom(RightUpArea)));
+                    context.Post(PostImageConfig, MergeImage(GetBitmapFromAreaRect(leftUpArea), GetBitmapFromAreaRect(RightUpArea)));
 
                 }
                 else
                 {
 
-
-
-                    //YCbCrLinear filter = new YCbCrLinear();
-                    //filter.InCb = new AForge.Range(-0.276f, 0.163f);
-                    //filter.InCr = new AForge.Range(-0.202f, 0.500f);
-                    //filter.ApplyInPlace(tmp);
-
                     //AreaRect wbArea = GetPixelsFromArea(tmp, 0, 0, 5, 5);
                     //int tilt = (100 - wbArea.Pixels[0]);
                     //BrightnessCorrection filter2 = new BrightnessCorrection(tilt);
                     //filter2.ApplyInPlace(tmp);
-
                     //Color t = BwArea(tmp, 0, 0, 10);
                     //tmp = ColorBalance(tmp, t.B, t.G, t.R);
-
-
-
-
                     //context.Post(PostImageConfig, new Bitmap(tmp, new Size(640, 480)));
 
                     if (CheckedArea())
@@ -401,7 +317,11 @@ namespace WebCam
                         }
                         else
                         {
-                            if (!CheckEqualsImage(new Bitmap(tmp, new Size(32, 24)), StoreImage)) { IsImageRecived = false; ElapsedSec = 0; }
+                            if (!CheckEqualsImage(new Bitmap(tmp, new Size(32, 24)), StoreImage))
+                            {
+                                IsImageRecived = false;
+                                ElapsedSec = 0;
+                            }
                         }
 
                     }
@@ -443,7 +363,6 @@ namespace WebCam
             return per < 86 ? false : true;
         }
 
-
         private static bool CheckedArea()
         {
             int coincidences = 0;
@@ -473,6 +392,10 @@ namespace WebCam
 
         }
 
+        /// <summary>
+        /// Метод передачи изображения  калибровочной зоны делегату
+        /// </summary>
+        /// <param name="o"></param>
         public static void PostImageConfig(object o)
         {
 
@@ -488,18 +411,20 @@ namespace WebCam
                 btm.EndInit();
             }
 
-
-
-            newFrame(btm);
+            calibFrame(btm);
 
         }
 
 
-
+        /// <summary>
+        /// Метод для извлечение объекта из другого потока в основной.
+        /// Необходим только в том случае если объект планируется использовать в основном потоке.
+        /// В данном случае передается изображение, которое в последующем используется для отображение в UI.
+        /// </summary>
+        /// <param name="o"></param>
         public static void PostImage(object o)
         {
             CurrentFrame = o;
-
         }
 
         private static void GetDominantColor(object o)
@@ -540,9 +465,12 @@ namespace WebCam
 
         }
 
+        /// <summary>
+        /// Сравнение палитр найденных объектов с базой.
+        /// </summary>
+        /// <param name="foundObjects">Список найденных объектов.</param>
         private static void CheckForEqualsInDataBase(List<ObjectStruct> foundObjects)
         {
-           // SortedBase();
             List<int?> resultID = new List<int?>();
 
             foundObjects.ForEach(newObj =>
@@ -550,7 +478,6 @@ namespace WebCam
 
                 ObjectList.ForEach(baseObj =>
                 {
-                    //Сравнение палитры объектов
                     if (CheckObjectPalette(baseObj, newObj))
                     {
                         if (baseObj.Id.Count == 1)
@@ -614,7 +541,7 @@ namespace WebCam
 
 
         /// <summary>
-        /// Метод сравнения id-блюд с базой.
+        /// Метод сравнения списка id-блюд полученного из терминала с базой.
         /// </summary>
         /// <param name="id">Список id-блюд, переданный из терминала.</param>
         public static void CheckId(List<int?> id)
@@ -685,25 +612,12 @@ namespace WebCam
         }
 
 
-        private static void ObjectComparison(ref ObjectStruct based, ObjectStruct newObject)
-        {
-            List<int?> newId = new List<int?>();
-            int? id = null;
-                foreach (var basedId in based.Id)
-                {
-                id = newObject.Id.Find(o => o == basedId);
-                if (id != null) { newId.Add(id); }
-                }
-
-            if (newId.Count > 0)
-            {
-                ObjectList.ForEach(ob => newId.ForEach(i => ob.Id.Remove(i)) );
-                based.Id = newId;
-            };
-            
-        }
-
-        
+        /// <summary>
+        /// Метод сравниение двух объектов ObjectStruct между собой на совпадение палитры.
+        /// </summary>
+        /// <param name="based">Объект хранимый в базе.</param>
+        /// <param name="current">Найденный объект.</param>
+        /// <returns></returns>        
         private static bool CheckObjectPalette(ObjectStruct based, ObjectStruct current)
         {
             if (current.Tone != null && based.Tone != null)
@@ -728,44 +642,29 @@ namespace WebCam
             return false;
         }
 
-
-
-
-
         private static List<ObjectStruct> GetObjectListFromBlobs(Bitmap source, Blob[] blobs)
         {
-
             List<ObjectStruct> ImgList = new List<ObjectStruct>();
-
-
 
             Color t = BwArea(source, 0, 0, 10);
             source = ColorBalance(source as Bitmap, t.B, t.G, t.R);
 
-            //SaturationCorrection filter = new SaturationCorrection(0.2f);
-            //filter.ApplyInPlace(source);
-
-
-
-            //Color t = GetBwColor(source);
-            //source = ColorBalance(source, t.B, t.G, t.R);
-
-
-            //AreaRect wbArea = GetPixelsFromArea(source, 0, 0, 5, 5);
-            //int tilt = (130 - wbArea.Pixels[0]);
-            //BrightnessCorrection filter2 = new BrightnessCorrection(tilt);
-            //filter2.ApplyInPlace(source);
-
             foreach (Blob blob in blobs)
             {
-                ImgList.Add(GetDominantColorFromBlob(source, blob));
+                ImgList.Add(GetObjectStructFromBlob(source, blob));
             }
             return ImgList;
 
         }
 
 
-
+        /// <summary>
+        /// Возвращает изображение формата Bitmap из зоны ограниченной квадратом структуры Blob.
+        /// Нужено для отладки.
+        /// </summary>
+        /// <param name="source">Источник.</param>
+        /// <param name="blob">Блоб структура.</param>
+        /// <returns></returns>
         private static Bitmap GetBitmapFromBlob(Bitmap source, Blob blob)
         {
             int rX = blob.Rectangle.Width / 2;
@@ -798,17 +697,21 @@ namespace WebCam
         }
 
 
-        private static ObjectStruct GetDominantColorFromBlob(Bitmap source, Blob blob)
+        /// <summary>
+        /// Возвращает объект типа ObjectStruct на основе передаваемых параметров включающих источник изображения и Blob-структуру.
+        /// Производит вычисление палитры изображения методом квантизации(уменьшение цветов), и запись полученых значений в структуру ObjectStruct.
+        /// </summary>
+        /// <param name="source">Источник изображения.</param>
+        /// <param name="blob">Блоб структура</param>
+        /// <returns></returns>
+        private static ObjectStruct GetObjectStructFromBlob(Bitmap source, Blob blob)
         {
 
             int rX = blob.Rectangle.Width / 2;
             int rY = blob.Rectangle.Height / 2;
-           // int r = blob.Rectangle.Width > 200 ? 40 : 2;
             int r = blob.Rectangle.Width / 4;
 
-
-
-             IColorQuantizer quantizer = new MedianCutQuantizer();
+            IColorQuantizer quantizer = new MedianCutQuantizer();
 
             for (int x = 0; x < blob.Rectangle.Width - 1; x++)
             {
@@ -831,7 +734,6 @@ namespace WebCam
                 }
 
             }
-         //   int paletteLenght = blob.Rectangle.Width > 200 ? 24 : 24; 36 64
             int paletteLenght = 256;
 
             Color[] color1 = quantizer.GetPalette(paletteLenght);
@@ -855,7 +757,12 @@ namespace WebCam
         }
 
 
-
+        /// <summary>
+        /// Метод возвращает коллекцию изображений ограниченных зонами квадратов, передаваемых структурой Blob. 
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="blobs"></param>
+        /// <returns>Коллекция изображений.</returns>
         private static List<BitmapImage> GetBitmapImagesFromBlobs(Bitmap source, Blob[] blobs)
         {
 
@@ -869,7 +776,12 @@ namespace WebCam
 
         }
 
-
+        /// <summary>
+        /// Метод конвертирует изображение из Bitmap в BitmapImage.
+        /// Необходим для отображения изображения в XAML-коде.
+        /// </summary>
+        /// <param name="source"></param>
+        /// <returns>BitmapImage</returns>
         private static BitmapImage GetBitmapImage(Bitmap source)
         {
             BitmapImage btm = new BitmapImage();
@@ -888,10 +800,14 @@ namespace WebCam
 
         }
 
-
-
-
-
+        /// <summary>
+        /// Возвращает объект класса Color, который является средним значением  цвета области передаваемых параметров.
+        /// </summary>
+        /// <param name="source">Источник</param>
+        /// <param name="x">Координата по X</param>
+        /// <param name="y">Координата по Y</param>
+        /// <param name="size">Размерность сетки.(Квадрат ширины и высоты)</param>
+        /// <returns>Среднее значение цвета.</returns>
         private static Color BwArea(Bitmap source, int x, int y, int size)
         {
             int lenght = size * size;
@@ -909,14 +825,7 @@ namespace WebCam
 
             }
 
-
             Color tmp = Color.FromArgb(255, R / lenght, G / lenght, B / lenght);
-            //double hue;
-            //double saturation;
-            //double value;
-            //ColorToHSV(tmp, out hue, out saturation, out value);
-            //tmp = ColorFromHSV(hue, 0.1f, 0.9f);
-
             return tmp;
         }
 
@@ -963,10 +872,15 @@ namespace WebCam
 
                 }
             }
-            return new AreaRect(pixels, new System.Windows.Point(x,y));
+            return new AreaRect(pixels);
         }
 
-        private static Bitmap GetBitmapFrom(AreaRect source)
+        /// <summary>
+        /// Метод возвращает объект класса Bitmap из 
+        /// </summary>
+        /// <param name="source"></param>
+        /// <returns></returns>
+        private static Bitmap GetBitmapFromAreaRect(AreaRect source)
         {
             int size = (int)Math.Sqrt(source.Pixels.Count());
 
@@ -987,7 +901,13 @@ namespace WebCam
             return tmp;
         }
 
-
+        /// <summary>
+        /// Метод объединения двух изображений. 
+        /// Необходим для отображения калибровочной зоны в режиме калибровки.
+        /// </summary>
+        /// <param name="img1">Изображение левой зоны.</param>
+        /// <param name="img2">Изображение правой зоны.</param>
+        /// <returns></returns>
         private static Bitmap MergeImage(Bitmap img1, Bitmap img2)
         {
             int width = img1.Width + img2.Width;
@@ -1009,7 +929,13 @@ namespace WebCam
         }
 
 
-
+        /// <summary>
+        /// Метод конвертации из HSV в RGB формат. 
+        /// </summary>
+        /// <param name="hue">Значение тона.</param>
+        /// <param name="saturation">Значение контрастности.</param>
+        /// <param name="value">Значение светлости.</param>
+        /// <returns></returns>
         public static Color ColorFromHSV(double hue, double saturation, double value)
         {
             int hi = Convert.ToInt32(Math.Floor(hue / 60)) % 6;
@@ -1036,6 +962,14 @@ namespace WebCam
         }
 
 
+        /// <summary>
+        /// Метод конвертации RGB цвета в HSV структуру.
+        /// Возвращает значения в выходные параметры.
+        /// </summary>
+        /// <param name="color">Источник</param>
+        /// <param name="hue">Возвращаемое значение тона</param>
+        /// <param name="saturation">Возвращаемое значение насыщенности</param>
+        /// <param name="value">Возвращаемое значение светлости</param>
         public static void ColorToHSV(Color color, out double hue, out double saturation, out double value)
         {
             int max = Math.Max(color.R, Math.Max(color.G, color.B));
@@ -1047,7 +981,14 @@ namespace WebCam
         }
 
 
-
+        /// <summary>
+        /// Возвращает изображение с откорректированным цветовым балансом по передаваемым параметрам.
+        /// /// </summary>
+        /// <param name="sourceBitmap">Источник изображения</param>
+        /// <param name="blueLevel">Значение голубого канала.</param>
+        /// <param name="greenLevel">Значение зелёного канала.</param>
+        /// <param name="redLevel">Значение красного канала.</param>
+        /// <returns></returns>
         public static Bitmap ColorBalance(this Bitmap sourceBitmap, byte blueLevel,
                                     byte greenLevel, byte redLevel)
         {
@@ -1111,11 +1052,19 @@ namespace WebCam
             return resultBitmap;
         }
 
+        /// <summary>
+        /// Сохраняет коллекцию калибровочных углов в файл.
+        /// </summary>
         public static void SaveCorners()
         {
             SaveData(AreaRectTemplates, @"corners_data.json");
         }
 
+        /// <summary>
+        /// Метод сериализации и сохранения объекта в файл.
+        /// </summary>
+        /// <param name="obj">Сериализуемый объект.</param>
+        /// <param name="fileName">Имя файла.</param>
         public static void SaveData(object obj, string fileName)
         {
             try
@@ -1131,7 +1080,10 @@ namespace WebCam
 
         }
 
-
+        /// <summary>
+        /// Метод десериализации объекта из файла.
+        /// </summary>
+        /// <param name="fileName">Имя файла.</param>
         public static object ReadData<T>(string fileName)
         {
             if (File.Exists(fileName))
@@ -1146,7 +1098,9 @@ namespace WebCam
             return null;
         }
 
-
+        /// <summary>
+        /// Метод очистки коллекции калибровочных углов.
+        /// </summary>
         public static void ClearCorners()
         {
             AreaRectTemplates.Clear();
