@@ -2,11 +2,9 @@
 using AForge.Imaging.ColorReduction;
 using AForge.Imaging.Filters;
 using AForge.Video.DirectShow;
-using CashTerminal.Models;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
@@ -18,6 +16,9 @@ using System.Windows.Threading;
 
 namespace WebCam
 {
+    /// <summary>
+    /// Класс определяющий объект для хранения набора пикселей.
+    /// </summary>
     public class AreaRect
     {
         public byte[] Pixels { get; set; }
@@ -41,6 +42,9 @@ namespace WebCam
         }
     }
 
+    /// <summary>
+    /// Класс определяющий структуру цвета в HSV-формате.
+    /// </summary>
     public class HSVColor
     {
         public double Hue { get; set; }
@@ -56,6 +60,9 @@ namespace WebCam
 
     }
 
+    /// <summary>
+    /// Класс определяющий структуру объекта (блюда)
+    /// </summary>
     public class ObjectStruct
     {
         public int Radius { get; set; } = 0;
@@ -67,18 +74,52 @@ namespace WebCam
     {
         private static int framerate = 1;
         private static int countframe = 0;
+        
+        /// <summary>
+        /// Ссылка на основной поток.
+        /// </summary>
         private static SynchronizationContext context = SynchronizationContext.Current;
         private static VideoCaptureDevice videoCaptureDevice = new VideoCaptureDevice();
         private static WebCamDevice currentDevice;
         private static List<WebCamDevice> deviceList = new List<WebCamDevice>();
+        
+        /// <summary>
+        /// Изображение текущих калибровочных углов.
+        /// </summary>
         private static AreaRectGroup upArea { get; set; }
         private static DispatcherTimer timer { get; set; }
+       
+        /// <summary>
+        /// Get or set коллекция изображений калибровочных углов.
+        /// </summary>
         private static List<AreaRectGroup> AreaRectTemplates { get; set; } = new List<AreaRectGroup>();
+
+        /// <summary>
+        /// Get or set коллекция объектов хранимых в базе.
+        /// </summary>
         private static List<ObjectStruct> ObjectList { get; set; } = new List<ObjectStruct>();
+
+        /// <summary>
+        /// Get or set коллекция найденных объектов базы.
+        /// </summary>
         private static List<ObjectStruct> FoundObjects { get; set; } = new List<ObjectStruct>();
+
+        /// <summary>
+        /// Get or set текущий фрейм.
+        /// </summary>
         private static object CurrentFrame { get; set; }
+
+        /// <summary>
+        /// Get or set уменьшенное изображение последнего обработанного кадра.
+        /// </summary>
         private static Bitmap StoreImage { get; set; }
+
+        /// <summary>
+        /// Get or set уменьшенное изображение текущего кадра.
+        /// </summary>
         private static Bitmap NewImage { get; set; }
+
+
         private static bool IsImageRecived { get; set; }
         private static int ElapsedSec { get; set; }
 
@@ -135,16 +176,25 @@ namespace WebCam
 
         }
 
+        /// <summary>
+        /// Добавление в коллекцию текущих калибровочных углов.
+        /// </summary>
         public static void AddTemplates()
         {
             AreaRectTemplates.Add(upArea);
         }
 
+        /// <summary>
+        /// Очистка коллекции калибровочных углов.
+        /// </summary>
         public static void ClearTemplates()
         {
             AreaRectTemplates.Clear();
         }
 
+        /// <summary>
+        /// Очистка коллекций базы и найденных объектов.
+        /// </summary>
         public static void ClearDataBase()
         {
             ObjectList.Clear();
@@ -227,23 +277,6 @@ namespace WebCam
 
         }
 
-        private static void Timer_Tick(object sender, EventArgs e)
-        {
-           
-            if (ElapsedSec == 1 && CurrentFrame != null)
-            {
-                IsImageRecived = false;
-            }
-
-
-            if (ElapsedSec == 2 && CurrentFrame != null)
-            {
-                GetDominantColor(CurrentFrame);
-            }
-
-            ElapsedSec++;
-        }
-
         public static void StopDevice()
         {
 
@@ -260,26 +293,33 @@ namespace WebCam
             }
         }
 
-        private static Color GetBwColor(Bitmap source)
+        /// <summary>
+        /// Метод определяющий условия обработки текущего фрейма(поиска объектов на подносе).
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private static void Timer_Tick(object sender, EventArgs e)
         {
-            byte R = 0;
-            byte G = 0;
-            byte B = 0;
-            for (int x = 0; x < source.Width; x++)
+           
+            if (ElapsedSec == 1 && CurrentFrame != null)
             {
-                for (int y = 0; y < source.Height; y++)
-                {
-                    Color c1 = source.GetPixel(x, y);
-                    if (c1.R > R) R = c1.R;
-                    if (c1.G > G) G = c1.G;
-                    if (c1.B > B) B = c1.B;
-                }
+                IsImageRecived = false;
             }
 
-            return Color.FromArgb(255, R, G, B);
- 
+
+            if (ElapsedSec == 2 && CurrentFrame != null)
+            {
+                ProcessFrame(CurrentFrame);
+            }
+
+            ElapsedSec++;
         }
 
+        /// <summary>
+        /// Метод вызывается каждый раз при получении нового кадра с камеры
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="eventArgs"></param>
         private static void VideoCaptureDevice_NewFrame(object sender, AForge.Video.NewFrameEventArgs eventArgs)
         {
 
@@ -334,10 +374,16 @@ namespace WebCam
             countframe++;
         }
 
-        private static bool CheckEqualsImage(Bitmap source, Bitmap store)
+        /// <summary>
+        /// Метод сравнения двух изображений на предмет различий в значениях пикселей в % соотношении.
+        /// </summary>
+        /// <param name="current">Текущее изображение</param>
+        /// <param name="last">Предыдущее изображение</param>
+        /// <returns></returns>
+        private static bool CheckEqualsImage(Bitmap current, Bitmap last)
         {
-            int width = source.Width - 1;
-            int height = source.Height - 1;
+            int width = current.Width - 1;
+            int height = current.Height - 1;
             int coincidences = 0;
             int grayScaleSource = 0;
             int grayScaleStore = 0;
@@ -347,8 +393,8 @@ namespace WebCam
                 for (int y = 0; y < height; y++)
                 {
 
-                    Color color1 = source.GetPixel(x, y);
-                    Color color2 = store.GetPixel(x, y);
+                    Color color1 = current.GetPixel(x, y);
+                    Color color2 = last.GetPixel(x, y);
 
                     grayScaleSource = (int)((color1.R + color1.G + color1.B) / 3);
                     grayScaleStore = (int)((color2.R + color2.G + color2.B) / 3);
@@ -363,6 +409,10 @@ namespace WebCam
             return per < 86 ? false : true;
         }
 
+        /// <summary>
+        /// Метод проверки текущих калибровочных углов с коллекцией калибровочных углов. Если области совпадают, возвращает true.
+        /// </summary>
+        /// <returns></returns>
         private static bool CheckedArea()
         {
             int coincidences = 0;
@@ -393,7 +443,7 @@ namespace WebCam
         }
 
         /// <summary>
-        /// Метод передачи изображения  калибровочной зоны делегату
+        /// Метод передачи изображения калибровочной зоны делегату.
         /// </summary>
         /// <param name="o"></param>
         public static void PostImageConfig(object o)
@@ -415,7 +465,6 @@ namespace WebCam
 
         }
 
-
         /// <summary>
         /// Метод для извлечение объекта из другого потока в основной.
         /// Необходим только в том случае если объект планируется использовать в основном потоке.
@@ -427,7 +476,13 @@ namespace WebCam
             CurrentFrame = o;
         }
 
-        private static void GetDominantColor(object o)
+        /// <summary>
+        /// Метод определения объектов на подносе.
+        /// Сначала исходное изображение конвертируется в оттенки серого, после чего производится бинаризация для детектирования и сортировки ограничивающих зон объектов. 
+        /// Все найденные объекты сохраняются в массив FoundObjects, все элементы которого в свою очередь проходят проверку на идентичность палитр с объектами находящимися в базе.
+        /// </summary>
+        /// <param name="o"></param>
+        private static void ProcessFrame(object o)
         {
             System.Drawing.Bitmap image = (System.Drawing.Bitmap)(o as Bitmap).Clone();
 
@@ -495,7 +550,6 @@ namespace WebCam
             newObject(resultID);
         }
 
-
         /// <summary>
         /// Метод возвращает список, который включает в себя id только неподтверждённых блюд.
         /// </summary>
@@ -538,7 +592,6 @@ namespace WebCam
 
             return sortedID;
         }
-
 
         /// <summary>
         /// Метод сравнения списка id-блюд полученного из терминала с базой.
@@ -611,7 +664,6 @@ namespace WebCam
             }
         }
 
-
         /// <summary>
         /// Метод сравниение двух объектов ObjectStruct между собой на совпадение палитры.
         /// </summary>
@@ -642,6 +694,12 @@ namespace WebCam
             return false;
         }
 
+        /// <summary>
+        /// Метод возвращает коллецию ObjectStruct на основе передаваемых параметров. 
+        /// </summary>
+        /// <param name="source">Источник.</param>
+        /// <param name="blobs">Коллекция Blob.</param>
+        /// <returns></returns>
         private static List<ObjectStruct> GetObjectListFromBlobs(Bitmap source, Blob[] blobs)
         {
             List<ObjectStruct> ImgList = new List<ObjectStruct>();
@@ -656,7 +714,6 @@ namespace WebCam
             return ImgList;
 
         }
-
 
         /// <summary>
         /// Возвращает изображение формата Bitmap из зоны ограниченной квадратом структуры Blob.
@@ -695,7 +752,6 @@ namespace WebCam
             return result;
 
         }
-
 
         /// <summary>
         /// Возвращает объект типа ObjectStruct на основе передаваемых параметров включающих источник изображения и Blob-структуру.
@@ -756,7 +812,6 @@ namespace WebCam
 
         }
 
-
         /// <summary>
         /// Метод возвращает коллекцию изображений ограниченных зонами квадратов, передаваемых структурой Blob. 
         /// </summary>
@@ -801,7 +856,7 @@ namespace WebCam
         }
 
         /// <summary>
-        /// Возвращает объект класса Color, который является средним значением  цвета области передаваемых параметров.
+        /// Возвращает объект класса Color, который является средним значением цвета области передаваемых параметров.
         /// </summary>
         /// <param name="source">Источник</param>
         /// <param name="x">Координата по X</param>
@@ -829,8 +884,17 @@ namespace WebCam
             return tmp;
         }
 
-
-        private static AreaRect GetPixelsFromArea(Bitmap source, int x, int y, int size, int scale, bool isBinary = false)
+        /// <summary>
+        /// Метод возвращает объект класса AreaRect.
+        /// </summary>
+        /// <param name="source">Источник изображения.</param>
+        /// <param name="x">Начальная координата X.</param>
+        /// <param name="y">Начальная координата Y.</param>
+        /// <param name="size">Размерность сетки.</param>
+        /// <param name="scale">Масштаб.</param>
+        /// <param name="isBoundary">Флаг определяющий тип выходных данных.</param>
+        /// <returns></returns>
+        private static AreaRect GetPixelsFromArea(Bitmap source, int x, int y, int size, int scale, bool isBoundary = false)
         {
             int areaWidth = (size / scale);
             byte[] pixels = new byte[areaWidth * areaWidth];
@@ -856,7 +920,7 @@ namespace WebCam
                     }
                     pixels[index] = (byte)(grayScaleSum / (scale * scale));
 
-                    if (isBinary)
+                    if (isBoundary)
                     {
                         if (pixels[index] > 60)
                         {
@@ -928,7 +992,6 @@ namespace WebCam
 
         }
 
-
         /// <summary>
         /// Метод конвертации из HSV в RGB формат. 
         /// </summary>
@@ -961,7 +1024,6 @@ namespace WebCam
                 return Color.FromArgb(255, v, p, q);
         }
 
-
         /// <summary>
         /// Метод конвертации RGB цвета в HSV структуру.
         /// Возвращает значения в выходные параметры.
@@ -979,7 +1041,6 @@ namespace WebCam
             saturation = (max == 0) ? 0 : 1d - (1d * min / max);
             value = max / 255d;
         }
-
 
         /// <summary>
         /// Возвращает изображение с откорректированным цветовым балансом по передаваемым параметрам.
