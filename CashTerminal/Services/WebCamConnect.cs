@@ -72,9 +72,12 @@ namespace WebCam
 
     public static class WebCamConnect
     {
+        private static readonly string ObjectDataFile = @"objects_data.json";
+        private static readonly string CalibrateCornersDataFile = @"corners_data.json";
+
         private static int framerate = 1;
         private static int countframe = 0;
-        
+
         /// <summary>
         /// Ссылка на основной поток.
         /// </summary>
@@ -121,7 +124,7 @@ namespace WebCam
 
 
         private static bool IsImageRecived { get; set; }
-        private static int ElapsedSec { get; set; }
+        private static int ElapsedMillsec { get; set; }
 
         public static bool IsConfigurationMode;
         public static bool IsStarted { get; set; }
@@ -258,12 +261,12 @@ namespace WebCam
                     IsStarted = true;
                     if (timer == null)
                     {
-                        timer  = new DispatcherTimer() { Interval = TimeSpan.FromSeconds(1) };
+                        timer  = new DispatcherTimer() { Interval = TimeSpan.FromMilliseconds(500) };
                         timer.Tick += Timer_Tick;
                         timer.Start();
-                        AreaRectTemplates = ReadData<List<AreaRectGroup>>(@"corners_data.json") as List<AreaRectGroup>;
+                        AreaRectTemplates = ReadData<List<AreaRectGroup>>(CalibrateCornersDataFile) as List<AreaRectGroup>;
 
-                        var result = ReadData<List<ObjectStruct>>(@"objects_data.json") as List<ObjectStruct>;
+                        var result = ReadData<List<ObjectStruct>>(ObjectDataFile) as List<ObjectStruct>;
                         if (result != null) ObjectList.AddRange(result);
                     }
                 }
@@ -285,7 +288,7 @@ namespace WebCam
             {
                 videoCaptureDevice.Stop();
                 IsStarted = false;
-                SaveData(ObjectList, @"objects_data.json");
+                SaveData(ObjectList,ObjectDataFile);
             }
             catch
             {
@@ -300,19 +303,23 @@ namespace WebCam
         /// <param name="e"></param>
         private static void Timer_Tick(object sender, EventArgs e)
         {
-           
-            if (ElapsedSec == 1 && CurrentFrame != null)
+
+            if (CurrentFrame != null)
             {
-                IsImageRecived = false;
+                switch (ElapsedMillsec)
+                {
+                    case 0:
+                        IsImageRecived = false;
+                        break;
+
+                    case 500:
+                        ProcessFrame(CurrentFrame);
+                        break;
+                }
+              
             }
 
-
-            if (ElapsedSec == 2 && CurrentFrame != null)
-            {
-                ProcessFrame(CurrentFrame);
-            }
-
-            ElapsedSec++;
+            ElapsedMillsec+=500;
         }
 
         /// <summary>
@@ -360,7 +367,7 @@ namespace WebCam
                             if (!CheckEqualsImage(new Bitmap(tmp, new Size(32, 24)), StoreImage))
                             {
                                 IsImageRecived = false;
-                                ElapsedSec = 0;
+                                ElapsedMillsec = 0;
                             }
                         }
 
@@ -1118,7 +1125,7 @@ namespace WebCam
         /// </summary>
         public static void SaveCorners()
         {
-            SaveData(AreaRectTemplates, @"corners_data.json");
+            SaveData(AreaRectTemplates, CalibrateCornersDataFile);
         }
 
         /// <summary>
