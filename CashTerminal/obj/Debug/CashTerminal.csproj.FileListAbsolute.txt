@@ -42,4 +42,3 @@ D:\CashTerminal\CashTerminal\bin\Debug\AForge.Imaging.xml
 D:\CashTerminal\CashTerminal\bin\Debug\AForge.Math.xml
 D:\CashTerminal\CashTerminal\bin\Debug\Newtonsoft.Json.dll
 D:\CashTerminal\CashTerminal\obj\Debug\App.baml
-D:\CashTerminal\CashTerminal\obj\Debug\CashTerminal.csprojResolveAssemblyReference.cache

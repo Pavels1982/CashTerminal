@@ -38,10 +38,10 @@
                         <Ellipse Width="10" Height="10" Stroke="White" Margin="2 1 7 0">
                             <Ellipse.Style>
                                 <Style TargetType="Ellipse">
-                                    <Setter Property="Fill" Value="Red"/>
+                                    <Setter Property="Fill" Value="Gray"/>
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding IsWebCamStreaming}" Value="True" >
-                                            <Setter Property="Fill" Value="Green"/>
+                                            <Setter Property="Fill" Value="LightGreen"/>
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>

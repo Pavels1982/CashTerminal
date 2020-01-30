@@ -42,4 +42,3 @@ D:\CashTerminal\CashTerminal\bin\Release\zh-tw\ZedGraph.resources.dll
 D:\CashTerminal\CashTerminal\obj\Release\Views\WebCamWindow.g.cs
 D:\CashTerminal\CashTerminal\obj\Release\Views\WebCamWindow.baml
 D:\CashTerminal\CashTerminal\obj\Release\App.baml
-D:\CashTerminal\CashTerminal\obj\Release\CashTerminal.csprojResolveAssemblyReference.cache

@@ -264,7 +264,7 @@ namespace WebCam
                         AreaRectTemplates = ReadData<List<AreaRectGroup>>(@"corners_data.json") as List<AreaRectGroup>;
 
                         var result = ReadData<List<ObjectStruct>>(@"objects_data.json") as List<ObjectStruct>;
-                        if (result != null) ObjectList = result;
+                        if (result != null) ObjectList.AddRange(result);
                     }
                 }
                 catch
@@ -940,7 +940,7 @@ namespace WebCam
         }
 
         /// <summary>
-        /// Метод возвращает объект класса Bitmap из 
+        /// Метод возвращает объект класса Bitmap преобразованный из структуры AreaRect.
         /// </summary>
         /// <param name="source"></param>
         /// <returns></returns>
@@ -1134,7 +1134,9 @@ namespace WebCam
                 {
                     JsonSerializer serializer = new JsonSerializer();
                     serializer.Serialize(file, obj);
+                    file.Close();
                 }
+               
             }
             catch
             { }

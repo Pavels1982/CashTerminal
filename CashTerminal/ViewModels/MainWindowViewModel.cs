@@ -27,11 +27,7 @@ namespace CashTerminal.ViewModels
         public event PropertyChangedEventHandler PropertyChanged;
 
         public ObservableCollection<Iitem> ItemList { get; set; } = new ObservableCollection<Iitem>();
-        private List<ObjectStruct> FindObjectList { get; set; } = new List<ObjectStruct>();
-
         public ObservableCollection<BitmapImage> ObjectList { get; set; } = new ObservableCollection<BitmapImage>();
-
-
         private ObservableCollection<Dish> basketList = new ObservableCollection<Dish>();
         public ObservableCollection<Dish> BasketList
         {
@@ -61,10 +57,8 @@ namespace CashTerminal.ViewModels
             }
         }
 
-
-
-
         private Dish selectedBasketItem;
+
         public Dish SelectedBasketItem
         {
             get
@@ -83,7 +77,6 @@ namespace CashTerminal.ViewModels
 
         }
 
-      
         private DishData DishData { get; set; }
 
         public string CalculatorValue { get; set; } = "0";
@@ -128,13 +121,8 @@ namespace CashTerminal.ViewModels
             if (o != null)
             {
                 Dish removableObject = o as Dish;
-                //(ItemList.Where(i => i.Name == removableObject.Name).First() as Dish).Color = new Color();
-       
                 BasketList.Remove(removableObject);
                 CalculateBasketPrice();
-
-               
-
             }
         }
 
@@ -172,7 +160,6 @@ namespace CashTerminal.ViewModels
             }
         }
 
-    
         public ICommand ItemClickCommand
         {
             get
@@ -206,7 +193,6 @@ namespace CashTerminal.ViewModels
             BasketList.Add(clone);
             SelectedBasketItem = clone;
             CalculateBasketPrice();
-
         }
 
         private void PostData(ObservableCollection<Dish> basketList)
@@ -225,15 +211,10 @@ namespace CashTerminal.ViewModels
             DishData = new DishData();
             ItemList = GetDishGroupList();
 
-          //  WebCamConnect.SetDevice(WebCamConnect.GetDevices().First());
-            
-         //   WebCamConnect.Start();
-
             WebCamWindow win = new WebCamWindow();
             win.Show();
             WebCamConnect.NewObject += WebCamConnect_NewObject;
         }
-
 
         private BitmapImage ImageFromStruct(ObjectStruct obj)
         {
@@ -271,75 +252,27 @@ namespace CashTerminal.ViewModels
 
         private void WebCamConnect_NewObject(List<int?> id)
         {
-            FindObjectList.Clear();
             BasketList.Clear();
-            // findObject.ForEach(obj => FindObjectList.Add(obj));
-
             foreach (int? recId in id)
             {
 
                 foreach (var group in DishData.DishGroup)
                 {
-                    if (group.ListDishes.Any(d => d.Id == recId)) { AddToBasket(group.ListDishes.Find(d => d.Id == recId));break; }
+                    if (group.ListDishes.Any(d => d.Id == recId))
+                    {
+                        AddToBasket(group.ListDishes.Find(d => d.Id == recId));
+                        break;
+                    }
                 }
 
             }
 
            }
 
-
-        //private bool CheckObjectStruct(ObjectStruct based, ObjectStruct current)
-        //{
-        //    int err = 10;
-        //    int errR = 21;
-        //    if (current.Color.R > based.Color.R - errR && current.Color.R < based.Color.R + errR)
-        //        if (current.Color.G > based.Color.G - err && current.Color.G < based.Color.G + err)
-        //            if (current.Color.B > based.Color.B - err && current.Color.B < based.Color.B + err)
-        //            {
-        //                if (current.Radius > based.Radius - 10 && current.Radius < based.Radius + 10) return true;
-        //            }
-
-        //    return false;
-        //}
-
-
-        private bool CheckObjectStruct(ObjectStruct based, ObjectStruct current)
-        {
-            if (current.Tone != null && based.Tone != null)
-            {
-
-                double err = 0.5f;
-                int index = 0;
-                int considence = 0;
-                foreach (var tone in current.Tone)
-                {
-                    if (based.Tone.Length == current.Tone.Length)
-                    {
-                        if (tone.Hue >= based.Tone[index].Hue - 9 && tone.Hue <= based.Tone[index].Hue + 9)//8
-                            if (tone.Saturation >= based.Tone[index].Saturation - 0.3f && tone.Saturation <= based.Tone[index].Saturation + 0.3f)
-                                considence++;
-                        index++;
-                    }
-                    
-                }
-              //  Debug.Write(string.Format("{0}%", considence));
-
-                int per = (int)(((double)considence / based.Tone.Length) * 100);
-                Debug.Write(string.Format("{0}%, ", per));
-                if (per >= 65)
-                    if (current.Radius > based.Radius - 10 && current.Radius < based.Radius + 10) return true;
-            }
-            return false;
-        }
-
-
-
-
         private ObservableCollection<Iitem> GetDishGroupList()
         {
             ObservableCollection<Iitem> result = new ObservableCollection<Iitem>();
             DishData.DishGroup.ToList().ForEach(item => result.Add(item));
-
             return result;
         }
 
@@ -349,8 +282,6 @@ namespace CashTerminal.ViewModels
             (o as DishGroup).ListDishes.ToList().ForEach(item => result.Add(item));
             return result;
         }
-
-
 
         private void CalButtonClick(object param)
         {

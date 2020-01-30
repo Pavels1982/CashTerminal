@@ -11,7 +11,7 @@ namespace CashTerminal.Data
     public class DishData
     {
         private readonly string[] fruits = { "Апельсин", "Яблоко зеленое", "Мандарин", "Банан"};
-        private readonly string[] bakery = { "Хлеб ржаной", "Хлеб пшеничный", "Булочки с маком", "Хлебцы оренбургские", "Булочки детские", "Булочки октябренок", "Булочки колобок", "Булочки горчичные", "Булочки столичные", "Булочки с тмином", "Рожки сдобные" };
+        private readonly string[] bakery = { "Хлеб ржаной", "Хлеб пшеничный", "Булочки с маком", "Хлебцы оренбургские", "Булочки детские", "Булочки октябренок", "Булочки колобок", "Булочки горчичные", "Булочки столичные", "Булочки с тмином", "Рожки сдобные", "Пицца" };
         private readonly string[] soups = { "Борщ", "Борщ полупорция", "Солянка", "Солянка полупорция", "Куриный бульон", "Куриный бульон полупорция" };
         private readonly string[] sidedish = { "Картофель отварной", "Картофель по-деревенски", "Картофельное пюре", "Гречка", "Рис", "Овощи по-итальянски", "Спагетти" };
         private readonly string[] drinkables = { "Чай", "Кофе", "Морс", "Апельсиновый сок", "Мультифруктовый сок", "Облепиховый сок", "Кисель" };
@@ -35,43 +35,8 @@ namespace CashTerminal.Data
             return result;
         }
 
-        private List<DishGroup> GetDishGroup()
-        {
-            List<DishGroup> ListGroup = new List<DishGroup>();
-            ListGroup.Add(new DishGroup() { Name = "Фрукты", ListDishes = GetGroup(fruits) });
-            ListGroup.Add(new DishGroup() { Name = "Выпечка", ListDishes = GetGroup(bakery) });
-            ListGroup.Add(new DishGroup() { Name = "Супы", ListDishes = GetGroup(soups) });
-            ListGroup.Add(new DishGroup() { Name = "Гарниры", ListDishes = GetGroup(sidedish) });
-            ListGroup.Add(new DishGroup() { Name = "Напитки", ListDishes = GetGroup(drinkables) });
-            ListGroup.Add(new DishGroup() { Name = "Каши", ListDishes = GetGroup(porridge) });
-            ListGroup.Add(new DishGroup() { Name = "Салаты", ListDishes = GetGroup(salads) });
-            ListGroup.Add(new DishGroup() { Name = "Прочее", ListDishes = GetGroup(other) });
-
-            return ListGroup;
-        }
-
-
         //private List<DishGroup> GetDishGroup()
         //{
-        //    List<DishGroup> ListGroup = new List<DishGroup>();
-        //    var result = WebCamConnect.ReadData<List<DishGroup>>(@"Dish_data.json") as List<DishGroup>;
-        //    if (result != null)
-        //    {
-        //        ListGroup = result;
-        //    }
-        //    else
-        //    {
-        //        ListGroup = CreateDishData();
-        //    }
-
-
-
-        //    return ListGroup;
-        //}
-
-        //private List<DishGroup> CreateDishData()
-        //{
-
         //    List<DishGroup> ListGroup = new List<DishGroup>();
         //    ListGroup.Add(new DishGroup() { Name = "Фрукты", ListDishes = GetGroup(fruits) });
         //    ListGroup.Add(new DishGroup() { Name = "Выпечка", ListDishes = GetGroup(bakery) });
@@ -82,10 +47,43 @@ namespace CashTerminal.Data
         //    ListGroup.Add(new DishGroup() { Name = "Салаты", ListDishes = GetGroup(salads) });
         //    ListGroup.Add(new DishGroup() { Name = "Прочее", ListDishes = GetGroup(other) });
 
-        //    WebCamConnect.SaveData(ListGroup, @"Dish_data.json");
-
         //    return ListGroup;
         //}
+
+
+        private List<DishGroup> GetDishGroup()
+        {
+            List<DishGroup> ListGroup = new List<DishGroup>();
+            var result = WebCamConnect.ReadData<List<DishGroup>>(@"dish_data.json") as List<DishGroup>;
+            if (result != null)
+            {
+                return  result;
+            }
+            else
+            {
+               return CreateDishData();
+            }
+
+
+           }
+
+        private List<DishGroup> CreateDishData()
+        {
+
+            List<DishGroup> ListGroup = new List<DishGroup>();
+            ListGroup.Add(new DishGroup() { Name = "Фрукты", ListDishes = GetGroup(fruits) });
+            ListGroup.Add(new DishGroup() { Name = "Выпечка", ListDishes = GetGroup(bakery) });
+            ListGroup.Add(new DishGroup() { Name = "Супы", ListDishes = GetGroup(soups) });
+            ListGroup.Add(new DishGroup() { Name = "Гарниры", ListDishes = GetGroup(sidedish) });
+            ListGroup.Add(new DishGroup() { Name = "Напитки", ListDishes = GetGroup(drinkables) });
+            ListGroup.Add(new DishGroup() { Name = "Каши", ListDishes = GetGroup(porridge) });
+            ListGroup.Add(new DishGroup() { Name = "Салаты", ListDishes = GetGroup(salads) });
+            ListGroup.Add(new DishGroup() { Name = "Прочее", ListDishes = GetGroup(other) });
+
+            WebCamConnect.SaveData(ListGroup, @"dish_data.json");
+
+            return ListGroup;
+        }
 
 
 
@@ -93,7 +91,7 @@ namespace CashTerminal.Data
 
         public DishData()
         {
-            DishGroup = GetDishGroup();
+           DishGroup.AddRange( GetDishGroup());
         }
     }
 }

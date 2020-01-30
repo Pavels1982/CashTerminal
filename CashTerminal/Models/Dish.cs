@@ -93,7 +93,7 @@ namespace CashTerminal.Models
         {
             return new Dish(this.Name)
             {
-                Id = this.GetHashCode(),
+                Id = this.Id,
                 Name = this.Name,
                 Price = this.Price,
                 Number = this.Number,
